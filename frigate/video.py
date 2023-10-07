@@ -23,10 +23,10 @@ from frigate.motion.improved_motion import ImprovedMotionDetector
 from frigate.object_detection import RemoteObjectDetector
 from frigate.ptz.autotrack import ptz_moving_at_frame_time
 from frigate.track import ObjectTracker
-from frigate.track.embeddings import ImageEmbedder
 from frigate.track.norfair_tracker import NorfairTracker
 from frigate.types import PTZMetricsTypes
 from frigate.util.builtin import EventsPerSecond
+from frigate.util.embeddings import ImageEmbedder
 from frigate.util.image import (
     FrameManager,
     SharedMemoryFrameManager,

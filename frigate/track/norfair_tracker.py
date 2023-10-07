@@ -9,8 +9,8 @@ from norfair.drawing.drawer import Drawer
 from frigate.config import CameraConfig
 from frigate.ptz.autotrack import PtzMotionEstimator
 from frigate.track import ObjectTracker
-from frigate.track.embeddings import ImageEmbedder
 from frigate.types import PTZMetricsTypes
+from frigate.util.embeddings import ImageEmbedder
 from frigate.util.image import intersection_over_union
 
 logger = logging.getLogger(__name__)
