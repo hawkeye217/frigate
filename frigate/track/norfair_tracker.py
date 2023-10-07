@@ -1,3 +1,4 @@
+import logging
 import random
 import string
 
@@ -8,8 +9,11 @@ from norfair.drawing.drawer import Drawer
 from frigate.config import CameraConfig
 from frigate.ptz.autotrack import PtzMotionEstimator
 from frigate.track import ObjectTracker
+from frigate.track.embeddings import ImageEmbedder
 from frigate.types import PTZMetricsTypes
 from frigate.util.image import intersection_over_union
+
+logger = logging.getLogger(__name__)
 
 
 # Normalizes distance from estimate relative to object size
@@ -60,6 +64,7 @@ class NorfairTracker(ObjectTracker):
         self,
         config: CameraConfig,
         ptz_metrics: PTZMetricsTypes,
+        image_embedder: ImageEmbedder,
     ):
         self.tracked_objects = {}
         self.disappeared = {}
@@ -77,13 +82,48 @@ class NorfairTracker(ObjectTracker):
         self.tracker = Tracker(
             distance_function=frigate_distance,
             distance_threshold=2.5,
-            initialization_delay=0,
+            initialization_delay=1,
             hit_counter_max=self.max_disappeared,
+            past_detections_length=10,
+            reid_distance_function=self._embedding_distance,
+            reid_distance_threshold=0.5,
+            reid_hit_counter_max=self.max_disappeared,
         )
         if self.ptz_autotracker_enabled.value:
             self.ptz_motion_estimator = PtzMotionEstimator(
                 self.camera_config, self.ptz_metrics
             )
+        self.image_embedder = image_embedder
+
+    def _embedding_distance(self, matched_not_init_trackers, unmatched_trackers):
+        snd_embedding = unmatched_trackers.last_detection.embedding
+
+        if snd_embedding is None:
+            for detection in reversed(unmatched_trackers.past_detections):
+                if detection.embedding is not None:
+                    snd_embedding = detection.embedding
+                    break
+            else:
+                return 1
+
+        for detection_fst in matched_not_init_trackers.past_detections:
+            if detection_fst.embedding is None:
+                continue
+
+            # This value ranges from -1 to 1, where 1 means the vectors are identical,
+            # 0 means they are orthogonal, and -1 means they are diametrically opposed.
+            cosine_similarity = self.image_embedder.image_embedder.cosine_similarity(
+                snd_embedding.embeddings[0].feature_vector,
+                detection_fst.embedding.embeddings[0].feature_vector,
+            )
+
+            # scale to [0, 1]
+            distance = 1 - cosine_similarity
+
+            if distance < 0.5:
+                return distance
+
+        return 1
 
     def register(self, track_id, obj):
         rand_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
@@ -247,6 +287,7 @@ class NorfairTracker(ObjectTracker):
                         "frame_time": frame_time,
                         "centroid": (centroid_x, centroid_y),
                     },
+                    embedding=obj[6],
                 )
             )
 
@@ -310,17 +351,17 @@ class NorfairTracker(ObjectTracker):
             for obj in self.tracker.tracked_objects
             if obj.last_detection.data["frame_time"] == frame_time
         ]
-        missing_detections = [
+        [
             Drawable(id=obj.id, points=obj.last_detection.points, label=obj.label)
             for obj in self.tracker.tracked_objects
             if obj.last_detection.data["frame_time"] != frame_time
         ]
         # draw the estimated bounding box
-        draw_boxes(frame, self.tracker.tracked_objects, color="green", draw_ids=True)
+        # draw_boxes(frame, self.tracker.tracked_objects, color="green", draw_ids=True)
         # draw the detections that were detected in the current frame
         draw_boxes(frame, active_detections, color="blue", draw_ids=True)
         # draw the detections that are missing in the current frame
-        draw_boxes(frame, missing_detections, color="red", draw_ids=True)
+        # draw_boxes(frame, missing_detections, color="red", draw_ids=True)
 
         # draw the distance calculation for the last detection
         # estimate vs detection
@@ -331,11 +372,13 @@ class NorfairTracker(ObjectTracker):
                 ld.points[1, 0],
                 ld.points[1, 1],
             )
-            frame = Drawer.text(
-                frame,
-                f"{obj.id}: {str(obj.last_distance)}",
-                position=text_anchor,
-                size=None,
-                color=(255, 0, 0),
-                thickness=None,
-            )
+            text_anchor = tuple((ld.points[0] + ld.points[1]) // 2)
+            if obj.id != None:
+                frame = Drawer.text(
+                    frame,
+                    f"{obj.id}",  #: {str(obj.last_distance)}",
+                    position=text_anchor,
+                    size=1,
+                    color=(255, 0, 0),
+                    thickness=None,
+                )

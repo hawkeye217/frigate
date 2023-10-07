@@ -23,6 +23,7 @@ from frigate.motion.improved_motion import ImprovedMotionDetector
 from frigate.object_detection import RemoteObjectDetector
 from frigate.ptz.autotrack import ptz_moving_at_frame_time
 from frigate.track import ObjectTracker
+from frigate.track.embeddings import ImageEmbedder
 from frigate.track.norfair_tracker import NorfairTracker
 from frigate.types import PTZMetricsTypes
 from frigate.util.builtin import EventsPerSecond
@@ -494,7 +495,9 @@ def track_camera(
         name, labelmap, detection_queue, result_connection, model_config, stop_event
     )
 
-    object_tracker = NorfairTracker(config, ptz_metrics)
+    image_embedder = ImageEmbedder()
+
+    object_tracker = NorfairTracker(config, ptz_metrics, image_embedder)
 
     frame_manager = SharedMemoryFrameManager()
 
@@ -507,6 +510,7 @@ def track_camera(
         frame_manager,
         motion_detector,
         object_detector,
+        image_embedder,
         object_tracker,
         detected_objects_queue,
         process_info,
@@ -732,6 +736,7 @@ def process_frames(
     frame_manager: FrameManager,
     motion_detector: MotionDetector,
     object_detector: RemoteObjectDetector,
+    image_embedder: ImageEmbedder,
     object_tracker: ObjectTracker,
     detected_objects_queue: mp.Queue,
     process_info: dict,
@@ -934,6 +939,12 @@ def process_frames(
                     for d in consolidated_detections
                     if d[0] not in ALL_ATTRIBUTE_LABELS
                 ]
+
+                # get embeddings for each detection for ReID
+                for index, d in enumerate(tracked_detections):
+                    embedding = image_embedder.get_embeddings(frame, d)
+                    tracked_detections[index] = d + (embedding,)
+
                 # now that we have refined our detections, we need to track objects
                 object_tracker.match_and_update(frame_time, tracked_detections)
             # else, just update the frame times for the stationary objects
@@ -966,7 +977,7 @@ def process_frames(
             detections[obj["id"]] = {**obj, "attributes": attributes}
 
         # debug object tracking
-        if False:
+        if True:
             bgr_frame = cv2.cvtColor(
                 frame,
                 cv2.COLOR_YUV2BGR_I420,
