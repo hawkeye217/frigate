@@ -96,7 +96,7 @@ class NorfairTracker(ObjectTracker):
         self.image_embedder = image_embedder
 
     def _embedding_distance(self, matched_not_init_trackers, unmatched_trackers):
-        logger.info("calling embed distance")
+        logger.debug("calling embed distance")
         snd_detection = unmatched_trackers.last_detection
         snd_embedding = snd_detection.embedding
 
@@ -127,7 +127,7 @@ class NorfairTracker(ObjectTracker):
             cosine_similarity = 1 - cosine_similarity
 
             if cosine_similarity < 0.5 and dist < 2.5:
-                logger.info(f"returning {cosine_similarity} - cosine similarity")
+                logger.debug(f"returning {cosine_similarity} - cosine similarity")
                 return cosine_similarity
 
         logger.debug("returning 1 - after cosine similarity")
