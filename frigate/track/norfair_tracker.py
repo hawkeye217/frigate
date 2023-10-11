@@ -81,7 +81,7 @@ class NorfairTracker(ObjectTracker):
         #       was a good reason to have different distance calculations
         self.tracker = Tracker(
             distance_function=frigate_distance,
-            distance_threshold=3,
+            distance_threshold=2.5,
             initialization_delay=self.camera_config.detect.fps / 2,
             hit_counter_max=self.max_disappeared,
             past_detections_length=10,
