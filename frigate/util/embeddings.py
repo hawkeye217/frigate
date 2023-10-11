@@ -30,6 +30,6 @@ class ImageEmbedder:
 
         embedding = self.image_embedder.embed(tensor_image)
 
-        # logger.debug(f"Embeddings for image: {embedding}")
+        # logger.info(f"Embeddings for image: {embedding}")
 
-        return embedding
+        return [] if not embedding else embedding

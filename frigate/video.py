@@ -987,7 +987,7 @@ def process_frames(
                 f"debug/frames/track-{'{:.6f}'.format(frame_time)}.jpg", bgr_frame
             )
         # debug
-        if False:
+        if True:
             bgr_frame = cv2.cvtColor(
                 frame,
                 cv2.COLOR_YUV2BGR_I420,

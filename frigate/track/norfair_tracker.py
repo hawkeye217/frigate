@@ -81,13 +81,13 @@ class NorfairTracker(ObjectTracker):
         #       was a good reason to have different distance calculations
         self.tracker = Tracker(
             distance_function=frigate_distance,
-            distance_threshold=2.5,
-            initialization_delay=1,
+            distance_threshold=3,
+            initialization_delay=self.camera_config.detect.fps / 2,
             hit_counter_max=self.max_disappeared,
             past_detections_length=10,
             reid_distance_function=self._embedding_distance,
-            reid_distance_threshold=0.5,
-            reid_hit_counter_max=self.max_disappeared,
+            reid_distance_threshold=0.6,
+            reid_hit_counter_max=self.max_disappeared / 2,
         )
         if self.ptz_autotracker_enabled.value:
             self.ptz_motion_estimator = PtzMotionEstimator(
@@ -96,14 +96,18 @@ class NorfairTracker(ObjectTracker):
         self.image_embedder = image_embedder
 
     def _embedding_distance(self, matched_not_init_trackers, unmatched_trackers):
-        snd_embedding = unmatched_trackers.last_detection.embedding
+        logger.info("calling embed distance")
+        snd_detection = unmatched_trackers.last_detection
+        snd_embedding = snd_detection.embedding
 
         if snd_embedding is None:
             for detection in reversed(unmatched_trackers.past_detections):
                 if detection.embedding is not None:
+                    snd_detection = detection
                     snd_embedding = detection.embedding
                     break
             else:
+                logger.debug("No embedding found")
                 return 1
 
         for detection_fst in matched_not_init_trackers.past_detections:
@@ -116,13 +120,17 @@ class NorfairTracker(ObjectTracker):
                 snd_embedding.embeddings[0].feature_vector,
                 detection_fst.embedding.embeddings[0].feature_vector,
             )
+            dist = distance(snd_detection.points, detection_fst.points)
+            logger.debug(f"distance: {dist}")
 
-            # scale to [0, 1]
-            distance = 1 - cosine_similarity
+            # scale to [0, 1] and invert the logic for reid threshold
+            cosine_similarity = 1 - cosine_similarity
 
-            if distance < 0.5:
-                return distance
+            if cosine_similarity < 0.5 and dist < 2.5:
+                logger.info(f"returning {cosine_similarity} - cosine similarity")
+                return cosine_similarity
 
+        logger.debug("returning 1 - after cosine similarity")
         return 1
 
     def register(self, track_id, obj):
@@ -145,11 +153,6 @@ class NorfairTracker(ObjectTracker):
             "xmax": self.detect_config.width,
             "ymax": self.detect_config.height,
         }
-
-        # start object with a hit count of `fps` to avoid quick detection -> loss
-        next(
-            (o for o in self.tracker.tracked_objects if o.global_id == track_id)
-        ).hit_counter = self.camera_config.detect.fps
 
     def deregister(self, id, track_id):
         del self.tracked_objects[id]
@@ -351,17 +354,17 @@ class NorfairTracker(ObjectTracker):
             for obj in self.tracker.tracked_objects
             if obj.last_detection.data["frame_time"] == frame_time
         ]
-        [
+        missing_detections = [
             Drawable(id=obj.id, points=obj.last_detection.points, label=obj.label)
             for obj in self.tracker.tracked_objects
             if obj.last_detection.data["frame_time"] != frame_time
         ]
         # draw the estimated bounding box
-        # draw_boxes(frame, self.tracker.tracked_objects, color="green", draw_ids=True)
+        draw_boxes(frame, self.tracker.tracked_objects, color="green", draw_ids=True)
         # draw the detections that were detected in the current frame
         draw_boxes(frame, active_detections, color="blue", draw_ids=True)
         # draw the detections that are missing in the current frame
-        # draw_boxes(frame, missing_detections, color="red", draw_ids=True)
+        draw_boxes(frame, missing_detections, color="red", draw_ids=True)
 
         # draw the distance calculation for the last detection
         # estimate vs detection
@@ -372,13 +375,11 @@ class NorfairTracker(ObjectTracker):
                 ld.points[1, 0],
                 ld.points[1, 1],
             )
-            text_anchor = tuple((ld.points[0] + ld.points[1]) // 2)
-            if obj.id != None:
-                frame = Drawer.text(
-                    frame,
-                    f"{obj.id}",  #: {str(obj.last_distance)}",
-                    position=text_anchor,
-                    size=1,
-                    color=(255, 0, 0),
-                    thickness=None,
-                )
+            frame = Drawer.text(
+                frame,
+                f"{obj.id}: {str(obj.last_distance)}, {str(obj.hit_counter)}",
+                position=text_anchor,
+                size=None,
+                color=(255, 0, 0),
+                thickness=None,
+            )
