@@ -17,6 +17,7 @@ apt-get -yqq build-dep nginx
 apt-get -yqq install --no-install-recommends ca-certificates wget
 update-ca-certificates -f
 apt install -y ccache
+apt install -y libavcodec-dev libswscale-dev
 
 export PATH="/usr/lib/ccache:$PATH"
 
