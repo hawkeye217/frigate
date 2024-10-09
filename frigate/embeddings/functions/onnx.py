@@ -13,6 +13,7 @@ from PIL import Image
 # https://github.com/huggingface/transformers/issues/27214
 # suppressed by setting env TRANSFORMERS_NO_ADVISORY_WARNINGS=1
 from transformers import AutoFeatureExtractor, AutoTokenizer
+from transformers.utils.logging import disable_progress_bar
 
 from frigate.const import MODEL_CACHE_DIR, UPDATE_MODEL_STATE
 from frigate.types import ModelStatusTypesEnum
@@ -24,7 +25,8 @@ warnings.filterwarnings(
     message="The class CLIPFeatureExtractor is deprecated",
 )
 
-
+# disables the progress bar for downloading tokenizers and feature extractors
+disable_progress_bar()
 logger = logging.getLogger(__name__)
 
 
@@ -68,17 +70,21 @@ class GenericONNXEmbedding:
             if file_name in self.download_urls:
                 ModelDownloader.download_from_url(self.download_urls[file_name], path)
             elif file_name == self.tokenizer_file:
-                logger.info(
-                    f"Downloading {self.model_name} tokenizer/feature extractor"
-                )
                 if self.model_type == "text":
+                    if not os.path.exists(path + "/" + self.model_name):
+                        logger.info(f"Downloading {self.model_name} tokenizer")
                     tokenizer = AutoTokenizer.from_pretrained(
-                        self.model_name, clean_up_tokenization_spaces=True
+                        self.model_name,
+                        cache_dir=f"{MODEL_CACHE_DIR}/{self.model_name}/tokenizer",
+                        clean_up_tokenization_spaces=True,
                     )
                     tokenizer.save_pretrained(path)
                 else:
+                    if not os.path.exists(path + "/" + self.model_name):
+                        logger.info(f"Downloading {self.model_name} feature extractor")
                     feature_extractor = AutoFeatureExtractor.from_pretrained(
-                        self.model_name
+                        self.model_name,
+                        cache_dir=f"{MODEL_CACHE_DIR}/{self.model_name}/feature_extractor",
                     )
                     feature_extractor.save_pretrained(path)
 
@@ -111,13 +117,15 @@ class GenericONNXEmbedding:
             )
 
     def _load_tokenizer(self):
-        tokenizer_path = os.path.join(self.download_path, self.tokenizer_file)
+        tokenizer_path = os.path.join(f"{MODEL_CACHE_DIR}/{self.model_name}/tokenizer")
         return AutoTokenizer.from_pretrained(
             tokenizer_path, clean_up_tokenization_spaces=True
         )
 
     def _load_feature_extractor(self):
-        feature_extractor_path = os.path.join(self.download_path, self.tokenizer_file)
+        feature_extractor_path = os.path.join(
+            f"{MODEL_CACHE_DIR}/{self.model_name}/feature_extractor"
+        )
         return AutoFeatureExtractor.from_pretrained(feature_extractor_path)
 
     def _load_model(self, path: str, providers: List[str]):
