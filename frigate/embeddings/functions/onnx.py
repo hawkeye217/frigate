@@ -75,6 +75,7 @@ class GenericONNXEmbedding:
                         logger.info(f"Downloading {self.model_name} tokenizer")
                     tokenizer = AutoTokenizer.from_pretrained(
                         self.model_name,
+                        trust_remote_code=True,
                         cache_dir=f"{MODEL_CACHE_DIR}/{self.model_name}/tokenizer",
                         clean_up_tokenization_spaces=True,
                     )
@@ -84,6 +85,7 @@ class GenericONNXEmbedding:
                         logger.info(f"Downloading {self.model_name} feature extractor")
                     feature_extractor = AutoFeatureExtractor.from_pretrained(
                         self.model_name,
+                        trust_remote_code=True,
                         cache_dir=f"{MODEL_CACHE_DIR}/{self.model_name}/feature_extractor",
                     )
                     feature_extractor.save_pretrained(path)
@@ -119,14 +121,19 @@ class GenericONNXEmbedding:
     def _load_tokenizer(self):
         tokenizer_path = os.path.join(f"{MODEL_CACHE_DIR}/{self.model_name}/tokenizer")
         return AutoTokenizer.from_pretrained(
-            tokenizer_path, clean_up_tokenization_spaces=True
+            self.model_name,
+            cache_dir=tokenizer_path,
+            trust_remote_code=True,
+            clean_up_tokenization_spaces=True,
         )
 
     def _load_feature_extractor(self):
         feature_extractor_path = os.path.join(
             f"{MODEL_CACHE_DIR}/{self.model_name}/feature_extractor"
         )
-        return AutoFeatureExtractor.from_pretrained(feature_extractor_path)
+        return AutoFeatureExtractor.from_pretrained(
+            self.model_name, trust_remote_code=True, cache_dir=feature_extractor_path
+        )
 
     def _load_model(self, path: str, providers: List[str]):
         if os.path.exists(path):

@@ -91,7 +91,7 @@ class Embeddings:
             "jinaai/jina-clip-v1-text_model_fp16.onnx",
             "jinaai/jina-clip-v1-tokenizer",
             "jinaai/jina-clip-v1-vision_model_fp16.onnx",
-            "jinaai/jina-clip-v1-feature_extractor.json",
+            "jinaai/jina-clip-v1-feature_extractor",
         ]
 
         for model in models:
@@ -148,6 +148,14 @@ class Embeddings:
                 id TEXT PRIMARY KEY,
                 description_embedding FLOAT[768]
             );
+        """)
+
+    def _drop_tables(self):
+        self.db.execute_sql("""
+            DROP TABLE vec_descriptions;
+        """)
+        self.db.execute_sql("""
+            DROP TABLE vec_thumbnails;
         """)
 
     def upsert_thumbnail(self, event_id: str, thumbnail: bytes):
@@ -280,6 +288,9 @@ class Embeddings:
 
     def reindex(self) -> None:
         logger.info("Indexing event embeddings...")
+
+        self._drop_tables()
+        self._create_tables()
 
         st = time.time()
         totals = {
