@@ -13,7 +13,15 @@ Use of the bundled go2rtc is optional. You can still configure FFmpeg to connect
 
 # Setup a go2rtc stream
 
-First, you will want to configure go2rtc to connect to your camera stream by adding the stream you want to use for live view in your Frigate config file. For the best experience, you should set the stream name under go2rtc to match the name of your camera so that Frigate will automatically map it and be able to use better live view options for the camera. Avoid changing any other parts of your config at this step. Note that go2rtc supports [many different stream types](https://github.com/AlexxIT/go2rtc/tree/v1.9.4#module-streams), not just rtsp.
+First, you will want to configure go2rtc to connect to your camera stream by adding the stream you want to use for live view in your Frigate config file. Avoid changing any other parts of your config at this step. Note that go2rtc supports [many different stream types](https://github.com/AlexxIT/go2rtc/tree/v1.9.2#module-streams), not just rtsp.
+
+:::tip
+
+For the best experience, you should set the stream name under `go2rtc` to match the name of your camera so that Frigate will automatically map it and be able to use better live view options for the camera.
+
+See [the live view docs](../configuration/live.md#setting-stream-for-live-ui) for more information.
+
+:::
 
 ```yaml
 go2rtc:
@@ -39,8 +47,8 @@ After adding this to the config, restart Frigate and try to watch the live strea
 
 - Check Video Codec:
     - If the camera stream works in go2rtc but not in your browser, the video codec might be unsupported.
-    - If using H265, switch to H264. Refer to [video codec compatibility](https://github.com/AlexxIT/go2rtc/tree/v1.9.4#codecs-madness) in go2rtc documentation.
-    - If unable to switch from H265 to H264, or if the stream format is different (e.g., MJPEG), re-encode the video using [FFmpeg parameters](https://github.com/AlexxIT/go2rtc/tree/v1.9.4#source-ffmpeg). It supports rotating and resizing video feeds and hardware acceleration. Keep in mind that transcoding video from one format to another is a resource intensive task and you may be better off using the built-in jsmpeg view.
+    - If using H265, switch to H264. Refer to [video codec compatibility](https://github.com/AlexxIT/go2rtc/tree/v1.9.2#codecs-madness) in go2rtc documentation.
+    - If unable to switch from H265 to H264, or if the stream format is different (e.g., MJPEG), re-encode the video using [FFmpeg parameters](https://github.com/AlexxIT/go2rtc/tree/v1.9.2#source-ffmpeg). It supports rotating and resizing video feeds and hardware acceleration. Keep in mind that transcoding video from one format to another is a resource intensive task and you may be better off using the built-in jsmpeg view.
         ```yaml
         go2rtc:
           streams:
