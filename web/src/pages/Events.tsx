@@ -128,7 +128,12 @@ export default function Events() {
   });
 
   const onUpdateFilter = useCallback(
-    (newFilter: ReviewFilter) => {
+    (newFilterOrUpdater: React.SetStateAction<ReviewFilter>) => {
+      const newFilter =
+        typeof newFilterOrUpdater === "function"
+          ? newFilterOrUpdater(reviewFilter ?? {})
+          : newFilterOrUpdater;
+
       setReviewFilter(newFilter);
 
       // update recording start time if filter
@@ -137,7 +142,7 @@ export default function Events() {
         setRecording({ ...recording, startTime: newFilter.after }, true);
       }
     },
-    [recording, setRecording, setReviewFilter],
+    [recording, setRecording, setReviewFilter, reviewFilter],
   );
 
   // review paging

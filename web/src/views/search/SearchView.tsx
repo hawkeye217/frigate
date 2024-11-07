@@ -44,7 +44,7 @@ type SearchViewProps = {
   setSearch: (search: string) => void;
   setSimilaritySearch: (search: SearchResult) => void;
   setSearchFilter: (filter: SearchFilter) => void;
-  onUpdateFilter: (filter: SearchFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
   loadMore: () => void;
   refresh: () => void;
   setColumns: (columns: number) => void;
@@ -379,7 +379,6 @@ export default function SearchView({
                 setColumns={setColumns}
                 defaultView={defaultView}
                 setDefaultView={setDefaultView}
-                filter={searchFilter}
                 onUpdateFilter={onUpdateFilter}
               />
               <ScrollBar orientation="horizontal" className="h-0" />

@@ -44,7 +44,7 @@ type ReviewFilterGroupProps = {
   filterList?: FilterList;
   showReviewed: boolean;
   setShowReviewed: (show: boolean) => void;
-  onUpdateFilter: (filter: ReviewFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<ReviewFilter>>;
   setMotionOnly: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
@@ -179,7 +179,10 @@ export default function ReviewFilterGroup({
           groups={groups}
           selectedCameras={filter?.cameras}
           updateCameraFilter={(newCameras) => {
-            onUpdateFilter({ ...filter, cameras: newCameras });
+            onUpdateFilter((prevFilter: ReviewFilter) => ({
+              ...prevFilter,
+              cameras: newCameras,
+            }));
           }}
         />
       )}
@@ -215,13 +218,16 @@ export default function ReviewFilterGroup({
           allZones={filterValues.zones}
           selectedZones={filter?.zones}
           setShowAll={(showAll) => {
-            onUpdateFilter({ ...filter, showAll });
+            onUpdateFilter((prevFilter) => ({ ...prevFilter, showAll }));
           }}
           updateLabelFilter={(newLabels) => {
-            onUpdateFilter({ ...filter, labels: newLabels });
+            onUpdateFilter((prevFilter) => ({
+              ...prevFilter,
+              labels: newLabels,
+            }));
           }}
           updateZoneFilter={(newZones) =>
-            onUpdateFilter({ ...filter, zones: newZones })
+            onUpdateFilter((prevFilter) => ({ ...prevFilter, zones: newZones }))
           }
         />
       )}
@@ -562,6 +568,7 @@ export function GeneralFilterContent({
             setCurrentLabels(undefined);
             setCurrentZones?.(undefined);
             updateLabelFilter(undefined);
+            updateZoneFilter?.(undefined);
           }}
         >
           Reset

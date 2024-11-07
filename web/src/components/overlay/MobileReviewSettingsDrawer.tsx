@@ -38,7 +38,7 @@ type MobileReviewSettingsDrawerProps = {
   reviewSummary?: ReviewSummary;
   allLabels: string[];
   allZones: string[];
-  onUpdateFilter: (filter: ReviewFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<ReviewFilter>>;
   setRange: (range: TimeRange | undefined) => void;
   setMode: (mode: ExportMode) => void;
   setShowExportPreview: (showPreview: boolean) => void;
@@ -217,12 +217,12 @@ export default function MobileReviewSettingsDrawer({
                 : new Date(filter.after * 1000)
             }
             onSelect={(day) => {
-              onUpdateFilter({
-                ...filter,
+              onUpdateFilter((prevFilter) => ({
+                ...prevFilter,
                 after: day == undefined ? undefined : day.getTime() / 1000,
                 before:
                   day == undefined ? undefined : getEndOfDayTimestamp(day),
-              });
+              }));
             }}
           />
         </div>
@@ -231,11 +231,11 @@ export default function MobileReviewSettingsDrawer({
           <Button
             aria-label="Reset"
             onClick={() => {
-              onUpdateFilter({
-                ...filter,
+              onUpdateFilter((prevFilter) => ({
+                ...prevFilter,
                 after: undefined,
                 before: undefined,
-              });
+              }));
             }}
           >
             Reset
@@ -268,14 +268,17 @@ export default function MobileReviewSettingsDrawer({
           currentZones={currentZones}
           setCurrentZones={setCurrentZones}
           updateZoneFilter={(newZones) =>
-            onUpdateFilter({ ...filter, zones: newZones })
+            onUpdateFilter((prevFilter) => ({ ...prevFilter, zones: newZones }))
           }
           setShowAll={(showAll) => {
-            onUpdateFilter({ ...filter, showAll });
+            onUpdateFilter((prevFilter) => ({ ...prevFilter, showAll }));
           }}
           setCurrentLabels={setCurrentLabels}
           updateLabelFilter={(newLabels) =>
-            onUpdateFilter({ ...filter, labels: newLabels })
+            onUpdateFilter((prevFilter) => ({
+              ...prevFilter,
+              labels: newLabels,
+            }))
           }
           onClose={() => setDrawerMode("select")}
         />

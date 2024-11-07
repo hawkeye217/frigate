@@ -28,7 +28,7 @@ type SearchFilterGroupProps = {
   filters?: SearchFilters[];
   filter?: SearchFilter;
   filterList?: FilterList;
-  onUpdateFilter: (filter: SearchFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
 };
 export default function SearchFilterGroup({
   className,
@@ -121,15 +121,15 @@ export default function SearchFilterGroup({
 
   const onUpdateSelectedRange = useCallback(
     (range?: DateRange) => {
-      onUpdateFilter({
-        ...filter,
+      onUpdateFilter((prevFilter) => ({
+        ...prevFilter,
         after:
           range?.from == undefined ? undefined : range.from.getTime() / 1000,
         before:
           range?.to == undefined ? undefined : getEndOfDayTimestamp(range.to),
-      });
+      }));
     },
-    [filter, onUpdateFilter],
+    [onUpdateFilter],
   );
 
   return (
@@ -146,7 +146,10 @@ export default function SearchFilterGroup({
           selectedCameras={filter?.cameras}
           hideText={false}
           updateCameraFilter={(newCameras) => {
-            onUpdateFilter({ ...filter, cameras: newCameras });
+            onUpdateFilter((prevFilter) => ({
+              ...prevFilter,
+              cameras: newCameras,
+            }));
           }}
         />
       )}
@@ -155,7 +158,10 @@ export default function SearchFilterGroup({
           allLabels={filterValues.labels}
           selectedLabels={filter?.labels}
           updateLabelFilter={(newLabels) => {
-            onUpdateFilter({ ...filter, labels: newLabels });
+            onUpdateFilter((prevFilter) => ({
+              ...prevFilter,
+              labels: newLabels,
+            }));
           }}
         />
       )}

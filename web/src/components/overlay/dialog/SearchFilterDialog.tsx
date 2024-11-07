@@ -37,7 +37,7 @@ type SearchFilterDialogProps = {
     zones: string[];
     search_type: SearchSource[];
   };
-  onUpdateFilter: (filter: SearchFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
 };
 export default function SearchFilterDialog({
   config,

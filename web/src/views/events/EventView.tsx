@@ -70,7 +70,7 @@ type EventViewProps = {
   markAllItemsAsReviewed: (currentItems: ReviewSegment[]) => void;
   onOpenRecording: (recordingInfo: RecordingStartingPoint) => void;
   pullLatestData: () => void;
-  updateFilter: (filter: ReviewFilter) => void;
+  updateFilter: React.Dispatch<React.SetStateAction<ReviewFilter>>;
 };
 export default function EventView({
   reviewItems,

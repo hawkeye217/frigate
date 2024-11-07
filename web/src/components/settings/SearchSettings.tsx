@@ -22,17 +22,15 @@ type SearchSettingsProps = {
   className?: string;
   columns: number;
   defaultView: string;
-  filter?: SearchFilter;
   setColumns: (columns: number) => void;
   setDefaultView: (view: string) => void;
-  onUpdateFilter: (filter: SearchFilter) => void;
+  onUpdateFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
 };
 export default function SearchSettings({
   className,
   columns,
   setColumns,
   defaultView,
-  filter,
   setDefaultView,
   onUpdateFilter,
 }: SearchSettingsProps) {
@@ -116,7 +114,10 @@ export default function SearchSettings({
           searchSources={searchSources}
           setSearchSources={(sources) => {
             setSearchSources(sources as SearchSource[]);
-            onUpdateFilter({ ...filter, search_type: sources });
+            onUpdateFilter((prevFilter) => ({
+              ...prevFilter,
+              search_type: sources,
+            }));
           }}
         />
       )}
