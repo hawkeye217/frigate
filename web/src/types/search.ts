@@ -74,11 +74,11 @@ export type SearchQueryParams = {
   labels?: string[];
   sub_labels?: string[];
   zones?: string[];
-  before?: string;
-  after?: string;
+  before?: number;
+  after?: number;
   min_score?: number;
   max_score?: number;
-  search_type?: string;
+  search_type?: SearchSource[];
   limit?: number;
   in_progress?: number;
   include_thumbnails?: number;

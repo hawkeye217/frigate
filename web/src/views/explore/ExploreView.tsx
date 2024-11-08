@@ -21,6 +21,7 @@ import TimeAgo from "@/components/dynamic/TimeAgo";
 import SearchResultActions from "@/components/menu/SearchResultActions";
 import { SearchTab } from "@/components/overlay/detail/SearchDetailDialog";
 import { FrigateConfig } from "@/types/frigateConfig";
+import { useQueryState } from "nuqs";
 
 type ExploreViewProps = {
   searchDetail: SearchResult | undefined;
@@ -137,13 +138,13 @@ function ThumbnailRow({
   setSimilaritySearch,
   onSelectSearch,
 }: ThumbnailRowType) {
+  // prepare query state for arrow navigation
   const navigate = useNavigate();
+  const [, setLabels] = useQueryState("labels");
 
-  const handleSearch = (label: string) => {
-    const similaritySearchParams = new URLSearchParams({
-      labels: label,
-    }).toString();
-    navigate(`/explore?${similaritySearchParams}`);
+  const handleSearch = async (label: string) => {
+    await setLabels(label);
+    navigate("/explore");
   };
 
   return (

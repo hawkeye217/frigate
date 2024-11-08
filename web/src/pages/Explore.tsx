@@ -5,11 +5,15 @@ import {
 } from "@/api/ws";
 import ActivityIndicator from "@/components/indicators/activity-indicator";
 import AnimatedCircularProgressBar from "@/components/ui/circular-progress-bar";
-import { useApiFilterArgs } from "@/hooks/use-api-filter";
 import { useTimezone } from "@/hooks/use-date-utils";
 import { usePersistence } from "@/hooks/use-persistence";
 import { FrigateConfig } from "@/types/frigateConfig";
-import { SearchFilter, SearchQuery, SearchResult } from "@/types/search";
+import {
+  SearchFilter,
+  SearchQuery,
+  SearchResult,
+  SearchSource,
+} from "@/types/search";
 import { ModelState } from "@/types/ws";
 import { formatSecondsToDuration } from "@/utils/dateUtil";
 import SearchView from "@/views/search/SearchView";
@@ -21,6 +25,14 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
+import {
+  parseAsFloat,
+  useQueryStates,
+  parseAsString,
+  parseAsArrayOf,
+  parseAsStringEnum,
+  parseAsInteger,
+} from "nuqs";
 
 const API_LIMIT = 25;
 
@@ -52,17 +64,87 @@ export default function Explore() {
 
   const [search, setSearch] = useState("");
 
-  const [searchFilter, setSearchFilter, searchSearchParams] =
-    useApiFilterArgs<SearchFilter>();
+  const [filterParams, setFilterParams] = useQueryStates({
+    cameras: parseAsString,
+    labels: parseAsString,
+    sub_labels: parseAsString,
+    zones: parseAsString,
+    after: parseAsFloat,
+    before: parseAsFloat,
+    time_range: parseAsString,
+    search_type: parseAsArrayOf(
+      parseAsStringEnum<SearchSource>([
+        "similarity",
+        "thumbnail",
+        "description",
+      ]),
+    ),
+    min_score: parseAsFloat,
+    max_score: parseAsFloat,
+    has_snapshot: parseAsInteger,
+    has_clip: parseAsInteger,
+    event_id: parseAsString,
+    query: parseAsString,
+  });
 
-  const searchTerm = useMemo(
-    () => searchSearchParams?.["query"] || "",
-    [searchSearchParams],
+  const searchFilter = useMemo<SearchFilter>(
+    () => ({
+      cameras: filterParams.cameras?.split(","),
+      labels: filterParams.labels?.split(","),
+      sub_labels: filterParams.sub_labels?.split(","),
+      zones: filterParams.zones?.split(","),
+      after: filterParams.after ?? undefined,
+      before: filterParams.before ?? undefined,
+      time_range: filterParams.time_range ?? undefined,
+      search_type: filterParams.search_type ?? undefined,
+      min_score: filterParams.min_score ?? undefined,
+      max_score: filterParams.max_score ?? undefined,
+      has_snapshot: filterParams.has_snapshot ?? undefined,
+      has_clip: filterParams.has_clip ?? undefined,
+      event_id: filterParams.event_id ?? undefined,
+      query: filterParams.query ?? undefined,
+    }),
+    [filterParams],
   );
 
+  const setSearchFilter = useCallback(
+    (newFilter: SearchFilter) => {
+      setFilterParams({
+        cameras: newFilter.cameras?.join(",") ?? null,
+        labels: newFilter.labels?.join(",") ?? null,
+        sub_labels: newFilter.sub_labels?.join(",") ?? null,
+        zones: newFilter.zones?.join(",") ?? null,
+        after: newFilter.after ?? null,
+        before: newFilter.before ?? null,
+        time_range: newFilter.time_range ?? null,
+        search_type: newFilter.search_type ?? null,
+        min_score: newFilter.min_score ?? null,
+        max_score: newFilter.max_score ?? null,
+        has_snapshot: newFilter.has_snapshot ?? null,
+        has_clip: newFilter.has_clip ?? null,
+        event_id: newFilter.event_id ?? null,
+        query: newFilter.query ?? null,
+      });
+    },
+    [setFilterParams],
+  );
+
+  const onUpdateFilter = useCallback(
+    (newFilterOrUpdater: React.SetStateAction<SearchFilter>) => {
+      const updatedFilter =
+        typeof newFilterOrUpdater === "function"
+          ? newFilterOrUpdater(searchFilter)
+          : newFilterOrUpdater;
+      setSearchFilter(updatedFilter);
+    },
+    [setSearchFilter, searchFilter],
+  );
+
+  const searchTerm = useMemo(() => searchFilter.query || "", [searchFilter]);
+
   const similaritySearch = useMemo(
-    () => searchSearchParams["search_type"] == "similarity",
-    [searchSearchParams],
+    () => searchFilter?.search_type?.includes("similarity") ?? false,
+    [searchFilter],
   );
 
   useEffect(() => {
@@ -83,40 +165,34 @@ export default function Explore() {
   }, [search]);
 
   const searchQuery: SearchQuery = useMemo(() => {
+    // remove undefined values and convert arrays to strings
+    const filteredSearchFilter = Object.fromEntries(
+      Object.entries(searchFilter)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) =>
+          Array.isArray(value) ? [key, value.join(",")] : [key, value],
+        ),
+    );
+
     // no search parameters
-    if (searchSearchParams && Object.keys(searchSearchParams).length === 0) {
-      if (defaultView == "grid") {
-        return ["events", {}];
-      } else {
-        return null;
-      }
+    if (Object.keys(filteredSearchFilter).length === 0) {
+      return defaultView === "grid" ? ["events", {}] : null;
     }
 
     // parameters, but no search term and not similarity
     if (
-      searchSearchParams &&
-      Object.keys(searchSearchParams).length !== 0 &&
+      Object.keys(filteredSearchFilter).length !== 0 &&
       !searchTerm &&
       !similaritySearch
     ) {
       return [
         "events",
         {
-          cameras: searchSearchParams["cameras"],
-          labels: searchSearchParams["labels"],
-          sub_labels: searchSearchParams["sub_labels"],
-          zones: searchSearchParams["zones"],
-          before: searchSearchParams["before"],
-          after: searchSearchParams["after"],
-          time_range: searchSearchParams["time_range"],
-          search_type: searchSearchParams["search_type"],
-          min_score: searchSearchParams["min_score"],
-          max_score: searchSearchParams["max_score"],
-          has_snapshot: searchSearchParams["has_snapshot"],
-          has_clip: searchSearchParams["has_clip"],
-          event_id: searchSearchParams["event_id"],
+          ...filteredSearchFilter,
           limit:
-            Object.keys(searchSearchParams).length == 0 ? API_LIMIT : undefined,
+            Object.keys(filteredSearchFilter).length === 0
+              ? API_LIMIT
+              : undefined,
           timezone,
           in_progress: 0,
           include_thumbnails: 0,
@@ -132,25 +208,13 @@ export default function Explore() {
     return [
       "events/search",
       {
+        ...filteredSearchFilter,
         query: similaritySearch ? undefined : searchTerm,
-        cameras: searchSearchParams["cameras"],
-        labels: searchSearchParams["labels"],
-        sub_labels: searchSearchParams["sub_labels"],
-        zones: searchSearchParams["zones"],
-        before: searchSearchParams["before"],
-        after: searchSearchParams["after"],
-        time_range: searchSearchParams["time_range"],
-        search_type: searchSearchParams["search_type"],
-        min_score: searchSearchParams["min_score"],
-        max_score: searchSearchParams["max_score"],
-        has_snapshot: searchSearchParams["has_snapshot"],
-        has_clip: searchSearchParams["has_clip"],
-        event_id: searchSearchParams["event_id"],
         timezone,
         include_thumbnails: 0,
       },
     ];
-  }, [searchTerm, searchSearchParams, similaritySearch, timezone, defaultView]);
+  }, [searchTerm, searchFilter, similaritySearch, timezone, defaultView]);
 
   // paging
 
@@ -166,10 +230,7 @@ export default function Explore() {
     // If it's not the first page, use the last item's start_time as the 'before' parameter
     if (pageIndex > 0 && previousPageData) {
       const lastDate = previousPageData[previousPageData.length - 1].start_time;
-      return [
-        url,
-        { ...params, before: lastDate.toString(), limit: API_LIMIT },
-      ];
+      return [url, { ...params, before: lastDate, limit: API_LIMIT }];
     }
 
     // For the first page, use the original params
@@ -442,8 +503,8 @@ export default function Explore() {
               event_id: search.id,
             });
           }}
-          setSearchFilter={setSearchFilter}
-          onUpdateFilter={setSearchFilter}
+          setSearchFilter={onUpdateFilter}
+          onUpdateFilter={onUpdateFilter}
           setColumns={setColumnCount}
           setDefaultView={setDefaultView}
           loadMore={loadMore}

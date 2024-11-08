@@ -58,7 +58,7 @@ type RecordingViewProps = {
   allCameras: string[];
   allPreviews?: Preview[];
   filter?: ReviewFilter;
-  updateFilter: (newFilter: ReviewFilter) => void;
+  updateFilter: React.Dispatch<React.SetStateAction<ReviewFilter>>;
 };
 export function RecordingView({
   startCamera,

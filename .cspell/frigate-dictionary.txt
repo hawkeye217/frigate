@@ -113,6 +113,8 @@ itemsize
 Jellyfin
 jetson
 jetsons
+jina
+jinaai
 joserfc
 jsmpeg
 jsonify
@@ -173,6 +175,7 @@ Norfair
 nptype
 NTSC
 numpy
+nuqs
 nvenc
 nvhost
 nvml

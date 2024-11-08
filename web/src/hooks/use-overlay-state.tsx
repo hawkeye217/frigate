@@ -5,6 +5,7 @@ import { usePersistence } from "./use-persistence";
 export function useOverlayState<S>(
   key: string,
   defaultValue: S | undefined = undefined,
+  useReplace: boolean = false,
 ): [S | undefined, (value: S, replace?: boolean) => void] {
   const location = useLocation();
   const navigate = useNavigate();
@@ -12,14 +13,14 @@ export function useOverlayState<S>(
   const currentLocationState = useMemo(() => location.state, [location]);
 
   const setOverlayStateValue = useCallback(
-    (value: S, replace: boolean = false) => {
+    (value: S, replace: boolean = useReplace) => {
       const newLocationState = { ...currentLocationState };
       newLocationState[key] = value;
       navigate(location.pathname, { state: newLocationState, replace });
     },
     // we know that these deps are correct
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key, currentLocationState, navigate],
+    [key, currentLocationState, navigate, useReplace],
   );
 
   const overlayStateValue = useMemo<S | undefined>(

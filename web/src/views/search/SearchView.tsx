@@ -43,7 +43,7 @@ type SearchViewProps = {
   defaultView?: string;
   setSearch: (search: string) => void;
   setSimilaritySearch: (search: SearchResult) => void;
-  setSearchFilter: (filter: SearchFilter) => void;
+  setSearchFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
   onUpdateFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
   loadMore: () => void;
   refresh: () => void;
@@ -355,7 +355,11 @@ export default function SearchView({
             <InputWithTags
               inputFocused={inputFocused}
               setInputFocused={setInputFocused}
-              filters={searchFilter ?? {}}
+              filters={Object.fromEntries(
+                Object.entries(searchFilter ?? {}).filter(
+                  ([, value]) => value !== undefined,
+                ),
+              )}
               setFilters={setSearchFilter}
               search={search}
               setSearch={setSearch}
@@ -401,7 +405,10 @@ export default function SearchView({
         {((isLoading && uniqueResults?.length == 0) || // show on initial load
           (isValidating && !isLoading)) && // or revalidation
           (searchTerm || // or change of filter/search term
-            (searchFilter && Object.keys(searchFilter).length !== 0)) && (
+            (searchFilter &&
+              Object.values(searchFilter).some(
+                (value) => value !== undefined,
+              ))) && (
             <ActivityIndicator className="absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-background/80 p-3 dark:bg-background/50" />
           )}
 
@@ -485,7 +492,7 @@ export default function SearchView({
         )}
       </div>
       {searchFilter &&
-        Object.keys(searchFilter).length === 0 &&
+        Object.values(searchFilter).every((value) => value === undefined) &&
         !searchTerm &&
         defaultView == "summary" && (
           <div className="scrollbar-container flex size-full flex-col overflow-y-auto">
