@@ -8,6 +8,7 @@ export interface UiConfig {
   strftime_fmt?: string;
   dashboard: boolean;
   order: number;
+  unit_system?: "metric" | "imperial";
 }
 
 export interface BirdseyeConfig {
@@ -223,6 +224,7 @@ export interface CameraConfig {
   zones: {
     [zoneName: string]: {
       coordinates: string;
+      distances: string[];
       filters: Record<string, unknown>;
       inertia: number;
       loitering_time: number;

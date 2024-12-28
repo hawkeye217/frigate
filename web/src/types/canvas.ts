@@ -8,6 +8,7 @@ export type Polygon = {
   objects: string[];
   points: number[][];
   pointsOrder?: number[];
+  distances: number[];
   isFinished: boolean;
   color: number[];
 };
@@ -18,6 +19,11 @@ export type ZoneFormValuesType = {
   loitering_time: number;
   isFinished: boolean;
   objects: string[];
+  speedEstimation: boolean;
+  lineA: number;
+  lineB: number;
+  lineC: number;
+  lineD: number;
 };
 
 export type ObjectMaskFormValuesType = {

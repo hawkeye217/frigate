@@ -12,6 +12,7 @@ import numpy as np
 from frigate.config import (
     CameraConfig,
     ModelConfig,
+    UIConfig,
 )
 from frigate.review.types import SeverityEnum
 from frigate.util.image import (
@@ -22,6 +23,7 @@ from frigate.util.image import (
     is_better_thumbnail,
 )
 from frigate.util.object import box_inside
+from frigate.util.velocity import calculate_real_world_speed
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ class TrackedObject:
         self,
         model_config: ModelConfig,
         camera_config: CameraConfig,
+        ui_config: UIConfig,
         frame_cache,
         obj_data: dict[str, any],
     ):
@@ -42,6 +45,7 @@ class TrackedObject:
         self.colormap = model_config.colormap
         self.logos = model_config.all_attribute_logos
         self.camera_config = camera_config
+        self.ui_config = ui_config
         self.frame_cache = frame_cache
         self.zone_presence: dict[str, int] = {}
         self.zone_loitering: dict[str, int] = {}
@@ -58,6 +62,10 @@ class TrackedObject:
         self.frame = None
         self.active = True
         self.pending_loitering = False
+        self.speed_history = []
+        self.current_estimated_speed = 0
+        self.average_estimated_speed = 0
+        self.velocity_angle = 0
         self.previous = self.to_dict()
 
     @property
@@ -129,6 +137,8 @@ class TrackedObject:
                     "region": obj_data["region"],
                     "score": obj_data["score"],
                     "attributes": obj_data["attributes"],
+                    "current_estimated_speed": self.current_estimated_speed,
+                    "velocity_angle": self.velocity_angle,
                 }
                 thumb_update = True
 
@@ -173,6 +183,43 @@ class TrackedObject:
                 # once an object has a zone inertia of 3+ it is not checked anymore
                 if 0 < zone_score < zone.inertia:
                     self.zone_presence[name] = zone_score - 1
+
+            # update speed
+            if (
+                zone.distances
+                and name in self.current_zones
+                and obj_data["frame_time"] == current_frame_time
+                and self.active
+            ):
+                speed_magnitude, self.velocity_angle = (
+                    calculate_real_world_speed(
+                        zone.contour,
+                        zone.distances,
+                        self.obj_data["estimate_velocity"],
+                        bottom_center,
+                        self.camera_config.detect.fps,
+                    )
+                    if self.active
+                    else (0, 0)
+                )
+                if self.ui_config.unit_system == "metric":
+                    # Convert m/s to km/h
+                    self.current_estimated_speed = speed_magnitude * 3.6
+                elif self.ui_config.unit_system == "imperial":
+                    # Convert ft/s to mph
+                    self.current_estimated_speed = speed_magnitude * 0.681818
+
+                # only keep the last 10 speeds
+                if len(self.speed_history) > 10:
+                    self.speed_history = self.speed_history[-10:]
+
+                self.speed_history.append(self.current_estimated_speed)
+                self.average_estimated_speed = sum(self.speed_history) / len(
+                    self.speed_history
+                )
+                logger.debug(
+                    f"Camera: {self.camera_config.name}, tracked object ID: {self.obj_data['id']}, zone: {name}, pixel velocity: {str(tuple(np.round(self.obj_data['estimate_velocity']).flatten().astype(int)))}, speed magnitude: {speed_magnitude}, velocity angle: {self.velocity_angle}, estimated speed: {self.current_estimated_speed:.1f}, average speed: {self.average_estimated_speed:.1f}, length: {len(self.speed_history)}"
+                )
 
         # update loitering status
         self.pending_loitering = in_loitering_zone
@@ -255,6 +302,9 @@ class TrackedObject:
             "current_attributes": self.obj_data["attributes"],
             "pending_loitering": self.pending_loitering,
             "max_severity": self.max_severity,
+            "current_estimated_speed": self.current_estimated_speed,
+            "average_estimated_speed": self.average_estimated_speed,
+            "velocity_angle": self.velocity_angle,
         }
 
         if include_thumbnail:
@@ -339,7 +389,12 @@ class TrackedObject:
                 box[2],
                 box[3],
                 self.obj_data["label"],
-                f"{int(self.thumbnail_data['score']*100)}% {int(self.thumbnail_data['area'])}",
+                f"{int(self.thumbnail_data['score']*100)}% {int(self.thumbnail_data['area'])}"
+                + (
+                    f" {self.thumbnail_data['current_estimated_speed']:.1f}"
+                    if self.thumbnail_data["current_estimated_speed"] != 0
+                    else ""
+                ),
                 thickness=thickness,
                 color=color,
             )
