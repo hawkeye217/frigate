@@ -29,7 +29,7 @@ The default video and audio codec on your camera may not always be compatible wi
 
 ### Audio Support
 
-MSE Requires AAC audio, WebRTC requires PCMU/PCMA, or opus audio. If you want to support both MSE and WebRTC then your restream config needs to make sure both are enabled.
+MSE Requires PCMA/PCMU or AAC audio, WebRTC requires PCMA/PCMU or opus audio. If you want to support both MSE and WebRTC then your restream config needs to make sure both are enabled.
 
 ```yaml
 go2rtc:
@@ -147,6 +147,7 @@ services:
 
 See [go2rtc WebRTC docs](https://github.com/AlexxIT/go2rtc/tree/v1.8.3#module-webrtc) for more information about this.
 
+
 ### Streaming options on camera group dashboards
 
 Frigate 0.16 and later provides a dialog in the Camera Group Edit pane with several options for streaming on a camera group's dashboard. These settings are _per device_ and are saved in your device's local storage.
@@ -193,3 +194,14 @@ The default dashboard ("All Cameras") will always use Smart Streaming and the fi
 
 6. I have unmuted some cameras on my dashboard, but I do not hear sound. Why?
    If your camera is streaming (as indicated by a red dot in the upper right, or if it has been set to continuous streaming mode), your browser may be blocking audio until you interact with the page. This is an intentional browser limitation. See [this article](https://developer.mozilla.org/en-US/docs/Web/Media/Autoplay_guide#autoplay_availability). Many browsers have a whitelist feature to change this behavior.
+
+### Two way talk
+
+For devices that support two way talk, Frigate can be configured to use the feature from the camera's Live view in the Web UI. You should:
+
+- Set up go2rtc with [WebRTC](#webrtc-extra-configuration).
+- Ensure you access Frigate via https (may require [opening port 8971](/frigate/installation/#ports)).
+- For the Home Assistant Frigate card, [follow the docs](https://github.com/dermotduffy/frigate-hass-card?tab=readme-ov-file#using-2-way-audio) for the correct source.
+
+To use the Reolink Doorbell with two way talk, you should use the [recommended Reolink configuration](/configuration/camera_specific#reolink-doorbell)
+

@@ -77,12 +77,19 @@ def migrate_frigate_config(config_file: str):
             yaml.dump(new_config, f)
         previous_version = "0.15-0"
 
+    if previous_version < "0.15-1":
+        logger.info(f"Migrating frigate config from {previous_version} to 0.15-1...")
+        new_config = migrate_015_1(config)
+        with open(config_file, "w") as f:
+            yaml.dump(new_config, f)
+        previous_version = "0.15-1"
+
     if previous_version < "0.16-0":
         logger.info(f"Migrating frigate config from {previous_version} to 0.16-0...")
         new_config = migrate_016_0(config)
         with open(config_file, "w") as f:
             yaml.dump(new_config, f)
-        previous_version = "0.16-0"
+        previous_version = "0.16-0"        
 
     logger.info("Finished frigate config migration...")
 
@@ -273,7 +280,6 @@ def migrate_015_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]
     new_config["version"] = "0.15-0"
     return new_config
 
-
 def migrate_016_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]]:
     """Handle migrating frigate config to 0.16-0"""
     new_config = config.copy()
@@ -294,6 +300,20 @@ def migrate_016_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]
         new_config["cameras"][name] = camera_config
 
     new_config["version"] = "0.16-0"
+
+def migrate_015_1(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]]:
+    """Handle migrating frigate config to 0.15-1"""
+    new_config = config.copy()
+
+    for detector, detector_config in config.get("detectors", {}).items():
+        path = detector_config.get("model", {}).get("path")
+
+        if path:
+            new_config["detectors"][detector]["model_path"] = path
+            del new_config["detectors"][detector]["model"]
+
+    new_config["version"] = "0.15-1"
+
     return new_config
 
 
@@ -322,7 +342,7 @@ def get_relative_coordinates(
                             continue
 
                         rel_points.append(
-                            f"{round(x / frame_shape[1], 3)},{round(y  / frame_shape[0], 3)}"
+                            f"{round(x / frame_shape[1], 3)},{round(y / frame_shape[0], 3)}"
                         )
 
                     relative_masks.append(",".join(rel_points))
@@ -345,7 +365,7 @@ def get_relative_coordinates(
                     return []
 
                 rel_points.append(
-                    f"{round(x / frame_shape[1], 3)},{round(y  / frame_shape[0], 3)}"
+                    f"{round(x / frame_shape[1], 3)},{round(y / frame_shape[0], 3)}"
                 )
 
             mask = ",".join(rel_points)
