@@ -389,7 +389,7 @@ class TrackedObject:
                 box[2],
                 box[3],
                 self.obj_data["label"],
-                f"{int(self.thumbnail_data['score']*100)}% {int(self.thumbnail_data['area'])}"
+                f"{int(self.thumbnail_data['score'] * 100)}% {int(self.thumbnail_data['area'])}"
                 + (
                     f" {self.thumbnail_data['current_estimated_speed']:.1f}"
                     if self.thumbnail_data["current_estimated_speed"] != 0

@@ -89,7 +89,7 @@ def migrate_frigate_config(config_file: str):
         new_config = migrate_016_0(config)
         with open(config_file, "w") as f:
             yaml.dump(new_config, f)
-        previous_version = "0.16-0"        
+        previous_version = "0.16-0"
 
     logger.info("Finished frigate config migration...")
 
@@ -280,6 +280,7 @@ def migrate_015_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]
     new_config["version"] = "0.15-0"
     return new_config
 
+
 def migrate_016_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]]:
     """Handle migrating frigate config to 0.16-0"""
     new_config = config.copy()
@@ -300,6 +301,7 @@ def migrate_016_0(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]
         new_config["cameras"][name] = camera_config
 
     new_config["version"] = "0.16-0"
+
 
 def migrate_015_1(config: dict[str, dict[str, any]]) -> dict[str, dict[str, any]]:
     """Handle migrating frigate config to 0.15-1"""
