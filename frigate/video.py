@@ -33,6 +33,7 @@ from frigate.util.image import (
     FrameManager,
     SharedMemoryFrameManager,
     draw_box_with_label,
+    get_histogram,
 )
 from frigate.util.object import (
     create_tensor_input,
@@ -435,7 +436,11 @@ def track_camera(
     object_filters = config.objects.filters
 
     motion_detector = ImprovedMotionDetector(
-        frame_shape, config.motion, config.detect.fps, name=config.name
+        frame_shape,
+        config.motion,
+        config.detect.fps,
+        name=config.name,
+        ptz_metrics=ptz_metrics,
     )
     object_detector = RemoteObjectDetector(
         name, labelmap, detection_queue, result_connection, model_config, stop_event
@@ -506,6 +511,7 @@ def detect(
         height = y_max - y_min
         area = width * height
         ratio = width / max(1, height)
+        hist = get_histogram(frame, x_min, y_min, x_max, y_max)
         det = (
             d[0],
             d[1],
@@ -513,6 +519,7 @@ def detect(
             area,
             ratio,
             region,
+            hist,
         )
         # apply object filters
         if is_object_filtered(det, objects_to_track, object_filters):
