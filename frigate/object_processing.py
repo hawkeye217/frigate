@@ -67,6 +67,14 @@ class CameraState:
 
     def get_current_frame(self, draw_options={}):
         with self.current_frame_lock:
+            logger.info(f"self._current_frame type: {type(self._current_frame)}")
+            if isinstance(
+                self._current_frame, np.ndarray
+            ):  # Check if it's a NumPy array
+                logger.info(f"self._current_frame shape: {self._current_frame.shape}")
+                logger.info(
+                    f"self._current_frame dtype: {self._current_frame.dtype}"
+                )  # Log the data type as well
             frame_copy = np.copy(self._current_frame)
             frame_time = self.current_frame_time
             tracked_objects = {k: v.to_dict() for k, v in self.tracked_objects.items()}
