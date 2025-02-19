@@ -494,3 +494,24 @@ def parse_preset_output_record(arg: Any, force_record_hvc1: bool) -> list[str]:
         preset += FFMPEG_HVC1_ARGS
 
     return preset
+
+
+RECORD_KEYFRAME_ARGS = [
+    "-map",
+    "0:v",
+    "-vf",
+    "select='eq(pict_type,I)',fps=1",
+    "-vsync",
+    "vfr",
+    "-f",
+    "image2",
+    "-update",
+    "1",
+    "-y",
+]
+
+
+def get_record_keyframe_args() -> list[str]:
+    """Return record stream keyframe args"""
+
+    return RECORD_KEYFRAME_ARGS

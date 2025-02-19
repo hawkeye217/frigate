@@ -1,10 +1,12 @@
 import os
+from pathlib import Path
 from typing import Optional
 
 from pydantic import Field, PrivateAttr
 
 from frigate.const import CACHE_DIR, CACHE_SEGMENT_FORMAT, REGEX_CAMERA_NAME
 from frigate.ffmpeg_presets import (
+    get_record_keyframe_args,
     parse_preset_hardware_acceleration_decode,
     parse_preset_hardware_acceleration_scale,
     parse_preset_input,
@@ -176,9 +178,26 @@ class CameraConfig(FrigateBaseModel):
                 or self.ffmpeg.output_args.record
             )
 
+            # record stream keyframes
+            # TODO: cleanup at shutdown
+            Path(os.path.join(CACHE_DIR, "keyframes")).mkdir(exist_ok=True)
+            ffmpeg_keyframe_args = get_record_keyframe_args()
+
             ffmpeg_output_args = (
                 record_args
                 + [f"{os.path.join(CACHE_DIR, self.name)}@{CACHE_SEGMENT_FORMAT}.mp4"]
+                # only add keyframe args if record stream is different from detect
+                # we know that by the fact that we've already set ffmpeg_output_args above
+                + (
+                    (
+                        ffmpeg_keyframe_args
+                        + [
+                            f"{os.path.join(CACHE_DIR, 'keyframes', self.name)}.jpg",
+                        ]
+                    )
+                    if not ffmpeg_output_args
+                    else []
+                )
                 + ffmpeg_output_args
             )
 
@@ -225,5 +244,6 @@ class CameraConfig(FrigateBaseModel):
             + ["-i", escape_special_characters(ffmpeg_input.path)]
             + ffmpeg_output_args
         )
+        print(cmd)
 
         return [part for part in cmd if part != ""]

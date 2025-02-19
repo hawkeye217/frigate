@@ -1,6 +1,7 @@
 """Maintain embeddings in SQLite-vec."""
 
 import base64
+import datetime
 import logging
 import os
 import threading
@@ -107,6 +108,7 @@ class EmbeddingMaintainer(threading.Thread):
             self._process_updates()
             self._process_finalized()
             self._process_event_metadata()
+            self._process_recordings_updates()
 
         self.event_subscriber.stop()
         self.event_end_subscriber.stop()
@@ -341,7 +343,7 @@ class EmbeddingMaintainer(threading.Thread):
             )
 
             logger.debug(
-                f"{camera} now has recordings available through {recordings_available_through_timestamp}"
+                f"{camera} now has recordings available through {datetime.datetime.fromtimestamp(recordings_available_through_timestamp).strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
     def _process_event_metadata(self):

@@ -891,6 +891,12 @@ class LicensePlateProcessor(RealTimeProcessorApi):
         """Look for license plates in image."""
         start = datetime.datetime.now().timestamp()
 
+        # TODO: test for recording stream keyframe
+        # need to ensure atomic writes from ffmpeg
+        # image_path = f"/tmp/cache/keyframes/{obj_data['camera']}.jpg"
+        # frame = cv2.imread(image_path)
+        # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+
         id = obj_data["id"]
 
         # don't run for non car objects
@@ -1096,6 +1102,7 @@ class LicensePlateProcessor(RealTimeProcessorApi):
                 "plate": top_plate,
                 "char_confidences": top_char_confidences,
                 "area": top_area,
+                "frame_time": obj_data["frame_time"],
             }
 
         self.__update_metrics(datetime.datetime.now().timestamp() - start)
