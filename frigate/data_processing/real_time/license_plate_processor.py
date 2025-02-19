@@ -3,7 +3,9 @@
 import datetime
 import logging
 import math
+import os
 import re
+import time
 from typing import List, Optional, Tuple
 
 import cv2
@@ -887,15 +889,42 @@ class LicensePlateProcessor(RealTimeProcessorApi):
         # 5. Return True if we should keep the previous plate (i.e., if it scores higher)
         return prev_score > curr_score
 
+    def wait_for_complete_image(self, image_path, max_wait=1.0, check_interval=0.05):
+        """Wait for an image file to stabilize in size before reading."""
+        prev_size = -1
+        start_time = time.time()
+
+        while time.time() - start_time < max_wait:
+            if os.path.exists(image_path):
+                current_size = os.path.getsize(image_path)
+                if current_size == prev_size:  # File size is stable
+                    break
+                prev_size = current_size
+            time.sleep(check_interval)
+
     def process_frame(self, obj_data: dict[str, any], frame: np.ndarray):
         """Look for license plates in image."""
         start = datetime.datetime.now().timestamp()
 
+        logger.info(f"detect frame {frame.shape}")
+        cv2.imwrite(
+            f"debug/frames/detect_frame_{start}.jpg",
+            frame,
+        )
         # TODO: test for recording stream keyframe
         # need to ensure atomic writes from ffmpeg
-        # image_path = f"/tmp/cache/keyframes/{obj_data['camera']}.jpg"
-        # frame = cv2.imread(image_path)
-        # frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+        image_path = f"/tmp/cache/keyframes/{obj_data['camera']}.jpg"
+        self.wait_for_complete_image(image_path)
+        frame = cv2.imread(image_path)
+        if frame is None:
+            raise RuntimeError("Failed to read image, possibly corrupted.")
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2YUV_I420)
+        logger.info(f"recording frame {frame.shape}")
+
+        cv2.imwrite(
+            f"debug/frames/recording_frame_{start}.jpg",
+            frame,
+        )
 
         id = obj_data["id"]
 
