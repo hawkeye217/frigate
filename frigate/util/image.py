@@ -7,12 +7,15 @@ import threading
 from abc import ABC, abstractmethod
 from multiprocessing import resource_tracker as _mprt
 from multiprocessing import shared_memory as _mpshm
+from pathlib import Path
 from string import printable
-from typing import AnyStr, Optional
+from typing import AnyStr, Optional, Tuple
 
 import cv2
 import numpy as np
 from unidecode import unidecode
+
+from frigate.const import CACHE_DIR, CACHE_SEGMENT_FORMAT
 
 logger = logging.getLogger(__name__)
 
@@ -959,3 +962,58 @@ def get_histogram(image, x_min, y_min, x_max, y_max):
         [image_bgr], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256]
     )
     return cv2.normalize(hist, hist).flatten()
+
+
+def get_latest_keyframe_yuv420(camera: str) -> Optional[Tuple[np.ndarray, float]]:
+    """
+    Retrieves the latest keyframe from the record stream for a given camera
+    and converts it to YUV420 format.
+
+    Args:
+        camera: The camera name
+
+    Returns:
+        Optional tuple containing:
+        - np.ndarray: The image in YUV420 format
+        - float: The timestamp of the keyframe in unix timestamp format
+        Returns None if no keyframe is found or on error
+    """
+    keyframes_dir = Path(CACHE_DIR) / "keyframes"
+    if not keyframes_dir.exists():
+        logger.warning(f"Keyframes directory does not exist: {keyframes_dir}")
+        return None
+
+    keyframes = []
+    for file in keyframes_dir.glob(f"{camera}@*.jpg"):
+        try:
+            date_str = file.stem.split("@")[1]
+            timestamp = datetime.datetime.strptime(
+                date_str, CACHE_SEGMENT_FORMAT
+            ).astimezone(datetime.timezone.utc)
+            keyframes.append((file, timestamp))
+        except (ValueError, IndexError):
+            logger.warning(f"Invalid keyframe filename format: {file.name}")
+            continue
+
+    if not keyframes:
+        logger.debug(f"No keyframes found for camera: {camera}")
+        return None
+
+    # Get the latest keyframe
+    latest_keyframe = max(keyframes, key=lambda x: x[1])
+    keyframe_path = latest_keyframe[0]
+    timestamp = latest_keyframe[1].timestamp()
+
+    try:
+        bgr_image = cv2.imread(str(keyframe_path))
+        if bgr_image is None:
+            logger.error(f"Failed to read keyframe: {keyframe_path}")
+            return None
+
+        yuv_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2YUV_I420)
+
+        return yuv_image, timestamp
+
+    except Exception as e:
+        logger.error(f"Error processing keyframe {keyframe_path}: {str(e)}")
+        return None
