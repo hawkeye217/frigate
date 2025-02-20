@@ -24,7 +24,7 @@ from .api import RealTimeProcessorApi
 
 logger = logging.getLogger(__name__)
 
-WRITE_DEBUG_IMAGES = True
+WRITE_DEBUG_IMAGES = False
 
 
 class LicensePlateProcessor(RealTimeProcessorApi):
