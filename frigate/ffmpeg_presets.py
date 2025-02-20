@@ -505,9 +505,10 @@ RECORD_KEYFRAME_ARGS = [
     "vfr",
     "-f",
     "image2",
-    "-update",
+    "-frame_pts",
     "1",
-    "-y",
+    "-strftime",
+    "1",
 ]
 
 

@@ -220,12 +220,14 @@ class RecordingMaintainer(threading.Thread):
                 [self.validate_and_move_segment(camera, reviews, r) for r in recordings]
             )
 
-            # TODO: this is not correct
+            # publish latest recording time
             self.recordings_publisher.publish(
                 (camera, recordings[0]["start_time"].timestamp())
             )
 
         recordings_to_insert: list[Optional[Recordings]] = await asyncio.gather(*tasks)
+
+        await self.cleanup_keyframes()
 
         # fire and forget recordings entries
         self.requestor.send_data(
@@ -501,6 +503,50 @@ class RecordingMaintainer(threading.Thread):
         # clear end_time cache
         self.end_time_cache.pop(cache_path, None)
         return None
+
+    async def cleanup_keyframes(self) -> None:
+        """
+        Removes all but the latest two jpeg files for each camera in CACHE_DIR/keyframes.
+        Files are expected to follow the format: camera@YYYYMMDDHHmmSS±ZZZZ.jpg
+        """
+        keyframes_dir = os.path.join(CACHE_DIR, "keyframes")
+        if not os.path.exists(keyframes_dir):
+            return
+
+        grouped_files: defaultdict[str, list[tuple[str, datetime.datetime]]] = (
+            defaultdict(list)
+        )
+
+        for filename in os.listdir(keyframes_dir):
+            if not filename.endswith(".jpg"):
+                continue
+
+            try:
+                basename = os.path.splitext(filename)[0]
+                camera, date = basename.rsplit("@", maxsplit=1)
+
+                timestamp = datetime.datetime.strptime(
+                    date, CACHE_SEGMENT_FORMAT
+                ).astimezone(datetime.timezone.utc)
+
+                grouped_files[camera].append((filename, timestamp))
+            except (ValueError, IndexError):
+                logger.warning(f"Invalid keyframe filename format: {filename}")
+                continue
+
+        for camera, files in grouped_files.items():
+            # Sort by timestamp, newest first
+            sorted_files = sorted(files, key=lambda x: x[1], reverse=True)
+
+            # Keep only the newest two files
+            files_to_remove = sorted_files[2:]
+
+            for filename, _ in files_to_remove:
+                try:
+                    file_path = os.path.join(keyframes_dir, filename)
+                    Path(file_path).unlink(missing_ok=True)
+                except Exception as e:
+                    logger.error(f"Failed to remove keyframe file {filename}: {str(e)}")
 
     def run(self) -> None:
         # Check for new files every 5 seconds

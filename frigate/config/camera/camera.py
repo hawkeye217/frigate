@@ -192,7 +192,7 @@ class CameraConfig(FrigateBaseModel):
                     (
                         ffmpeg_keyframe_args
                         + [
-                            f"{os.path.join(CACHE_DIR, 'keyframes', self.name)}.jpg",
+                            f"{os.path.join(CACHE_DIR, 'keyframes', self.name)}@{CACHE_SEGMENT_FORMAT}.jpg",
                         ]
                     )
                     if not ffmpeg_output_args
