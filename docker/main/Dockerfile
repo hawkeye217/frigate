@@ -245,6 +245,40 @@ RUN --mount=type=bind,from=wheels,source=/wheels,target=/deps/wheels \
 
 COPY --from=deps-rootfs / /
 
+####
+#
+# MemryX Support
+#
+# 1.  Install system dependencies and Python packages
+# 2. Add MemryX repo and install memx-accl
+#
+####
+# Install system dependencies
+RUN apt-get -qq update && \
+    apt-get -qq install -y --no-install-recommends \
+    libhdf5-dev \
+    python3-dev \
+    cmake \
+    python3-venv \
+    build-essential \
+    curl \
+    wget \
+    gnupg 
+
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install --extra-index-url https://developer.memryx.com/pip memryx
+
+# Add MemryX repo + key
+RUN curl -fsSL https://developer.memryx.com/deb/memryx.asc | tee /etc/apt/trusted.gpg.d/memryx.asc && \
+    echo "deb https://developer.memryx.com/deb stable main" > /etc/apt/sources.list.d/memryx.list && \
+    apt-get update -qq
+
+# Install memx-accl from MemryX repo
+RUN apt-get install -y --no-install-recommends memx-accl
+
+# Debug messages
+RUN echo "Hello from inside MemryX Docker image!"
+
 RUN ldconfig
 
 EXPOSE 5000
