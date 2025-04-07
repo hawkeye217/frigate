@@ -8,6 +8,8 @@ import threading
 from abc import ABC, abstractmethod
 
 import numpy as np
+import cv2
+import time
 from setproctitle import setproctitle
 
 import frigate.util as util
@@ -16,6 +18,7 @@ from frigate.detectors.detector_config import (
     BaseDetectorConfig,
     InputDTypeEnum,
     InputTensorEnum,
+    ModelTypeEnum
 )
 from frigate.util.builtin import EventsPerSecond, load_labels
 from frigate.util.image import SharedMemoryFrameManager, UntrackedSharedMemory
@@ -49,6 +52,8 @@ class LocalObjectDetector(ObjectDetector):
             self.labels = {}
         else:
             self.labels = load_labels(labels)
+        
+        self.model_type = detector_config.model.model_type
 
         if detector_config:
             self.input_transform = tensor_transform(detector_config.model.input_tensor)
@@ -86,7 +91,131 @@ class LocalObjectDetector(ObjectDetector):
             tensor_input /= 255
 
         return self.detect_api.detect_raw(tensor_input=tensor_input)
+    
+    def detect_raw_memx(self, tensor_input: np.ndarray):
 
+        if self.model_type == ModelTypeEnum.yolox:
+            
+            tensor_input = tensor_input.squeeze(0)
+
+            padded_img = np.ones((640, 640, 3),
+                    dtype=np.uint8) * 114
+
+            scale = min(640 / float(tensor_input.shape[0]),
+                    640 / float(tensor_input.shape[1]))
+            sx,sy = int(tensor_input.shape[1] * scale), int(tensor_input.shape[0] * scale)
+
+            resized_img = cv2.resize(tensor_input, (sx,sy), interpolation=cv2.INTER_LINEAR)
+            padded_img[:sy, :sx] = resized_img.astype(np.uint8)
+            
+
+            # Step 4: Slice the padded image into 4 quadrants and concatenate them into 12 channels
+            x0 = padded_img[0::2, 0::2, :]  # Top-left
+            x1 = padded_img[1::2, 0::2, :]  # Bottom-left
+            x2 = padded_img[0::2, 1::2, :]  # Top-right
+            x3 = padded_img[1::2, 1::2, :]  # Bottom-right
+
+            # Step 5: Concatenate along the channel dimension (axis 2)
+            concatenated_img = np.concatenate([x0, x1, x2, x3], axis=2)
+
+            # Step 6: Return the processed image as a contiguous array of type float32
+            return np.ascontiguousarray(concatenated_img).astype(np.float32)
+
+        # if self.dtype == InputDTypeEnum.float:
+        tensor_input = tensor_input.astype(np.float32)
+        tensor_input /= 255
+
+        tensor_input = tensor_input.transpose(1,2,0,3)    #NHWC --> HWNC(dfp input shape)
+        
+        return tensor_input
+    
+
+def async_run_detector(
+    name: str,
+    detection_queue: mp.Queue,
+    out_events: dict[str, mp.Event],
+    avg_speed,
+    start,
+    detector_config,
+):
+    threading.current_thread().name = f"detector:{name}"
+    logger.info(f"Starting MemryX Async detection process: {os.getpid()}")
+    setproctitle(f"frigate.detector.{name}")
+
+    stop_event = mp.Event()
+
+    def receiveSignal(signalNumber, frame):
+        stop_event.set()
+
+    signal.signal(signal.SIGTERM, receiveSignal)
+    signal.signal(signal.SIGINT, receiveSignal)
+
+    frame_manager = SharedMemoryFrameManager()
+    object_detector = LocalObjectDetector(detector_config=detector_config)
+
+    outputs = {}
+    for name in out_events.keys():
+        out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
+        out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
+        outputs[name] = {"shm": out_shm, "np": out_np}
+
+    def detect_worker():
+        """ Continuously fetch frames and send them to MemryX """
+        logger.info(f"Starting Detect Worker Thread")
+        while not stop_event.is_set():
+            try:
+                connection_id = detection_queue.get(timeout=1)
+            except queue.Empty:
+                continue
+
+            input_frame = frame_manager.get(
+                connection_id,
+                (1, detector_config.model.height, detector_config.model.width, 3),
+            )
+
+            if input_frame is None:
+                logger.warning(f"Failed to get frame {connection_id} from SHM")
+                continue
+            
+            input_frame = object_detector.detect_raw_memx(input_frame)
+
+            # Start measuring inference time
+            start.value = datetime.datetime.now().timestamp()
+
+            # Send frame directly to MemryX processing
+            object_detector.detect_api.send_input(connection_id, input_frame)
+
+    def result_worker():
+        """ Continuously fetch results from MemryX and update outputs """
+        logger.info(f"Starting Result Worker Thread")
+        while not stop_event.is_set():
+            connection_id, detections = object_detector.detect_api.receive_output()
+
+            # Calculate processing time
+            duration = datetime.datetime.now().timestamp() - start.value
+            frame_manager.close(connection_id)
+
+            # Update average inference speed
+            avg_speed.value = (avg_speed.value * 9 + duration) / 10
+
+            if connection_id in outputs and detections is not None:
+                outputs[connection_id]["np"][:] = detections[:]
+                out_events[connection_id].set()
+
+    # Initialize avg_speed
+    start.value = 0.0
+    avg_speed.value = 0.0  # Start with an initial value
+
+    # Start worker threads
+    detect_thread = threading.Thread(target=detect_worker, daemon=True)
+    result_thread = threading.Thread(target=result_worker, daemon=True)
+    detect_thread.start()
+    result_thread.start()
+
+    while not stop_event.is_set():
+        time.sleep(1)  # Keep process alive
+
+    logger.info("Exited MemryX detection process...")
 
 def run_detector(
     name: str,
@@ -181,17 +310,31 @@ class ObjectDetectProcess:
         self.detection_start.value = 0.0
         if (self.detect_process is not None) and self.detect_process.is_alive():
             self.stop()
-        self.detect_process = util.Process(
-            target=run_detector,
-            name=f"detector:{self.name}",
-            args=(
-                self.name,
-                self.detection_queue,
-                self.out_events,
-                self.avg_inference_speed,
-                self.detection_start,
-                self.detector_config,
-            ),
+        if (self.detector_config.type == 'memryx'):
+            self.detect_process = util.Process(
+                target=async_run_detector,
+                name=f"detector:{self.name}",
+                args=(
+                    self.name,
+                    self.detection_queue,
+                    self.out_events,
+                    self.avg_inference_speed,
+                    self.detection_start,
+                    self.detector_config,
+                ),
+            )
+        else:
+            self.detect_process = util.Process(
+                target=run_detector,
+                name=f"detector:{self.name}",
+                args=(
+                    self.name,
+                    self.detection_queue,
+                    self.out_events,
+                    self.avg_inference_speed,
+                    self.detection_start,
+                    self.detector_config,
+                ),
         )
         self.detect_process.daemon = True
         self.detect_process.start()
