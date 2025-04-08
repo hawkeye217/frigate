@@ -1,10 +1,6 @@
 mqtt:
   enabled: false  # Set this to True if using MQTT for event triggers
 
-# detectors:
-#   cpu:
-#     type: cpu  # Using CPU for detection (best for testing)
-
 detectors:
   memryx:
     type: memryx
