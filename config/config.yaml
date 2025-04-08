@@ -10,36 +10,29 @@ detectors:
 #   model_type: yolov9
 #   width: 640
 #   height: 640
-#   path: /config/model_cache/memryx_cache/YOLO_v9_small_640_640_3_onnx.dfp
-#   labelmap_path: /config/model_cache/memryx_cache/labelmap.txt
-
-# model:
-#   model_type: yolov8
-#   width: 640
-#   height: 640
-#   path: /config/model_cache/memryx_cache/YOLO_v8_small_640_640_3_onnx.dfp
-#   labelmap_path: /config/model_cache/memryx_cache/labelmap.txt
+#   path: /memryx_models/yolov9/YOLO_v9_small_640_640_3_onnx.dfp
+#   labelmap_path: /memryx_models/yolov9/labelmap.txt
 
 # model:
 #   model_type: yolonas
 #   width: 320
 #   height: 320
-#   path: /config/model_cache/memryx_cache/yolo_nas_s.dfp
-#   labelmap_path: /config/model_cache/memryx_cache/labelmap.txt
-
-model:
-  model_type: yolox
-  width: 640
-  height: 640
-  path: /config/model_cache/memryx_cache/YOLOX_640_640_3_onnx.dfp
-  labelmap_path: /config/model_cache/memryx_cache/labelmap.txt
+#   path: /memryx_models/yolo_nas/yolo_nas_s.dfp
+#   labelmap_path: /memryx_models/yolo_nas/labelmap.txt
 
 # model:
-#   model_type: ssd
-#   width: 320
-#   height: 320
-#   path: /config/model_cache/memryx_cache/SSDlite_MobileNet_v2_320_320_3_onnx.dfp
-#   labelmap_path: /config/model_cache/memryx_cache/labelmap.txt
+#   model_type: yolox
+#   width: 640
+#   height: 640
+#   path: /memryx_models/yolox/YOLOX_640_640_3_onnx.dfp
+#   labelmap_path: /memryx_models/yolox/labelmap.txt
+
+model:
+  model_type: ssd
+  width: 320
+  height: 320
+  path: /memryx_models/ssdlite/SSDlite_MobileNet_v2_320_320_3_onnx.dfp
+  labelmap_path: /memryx_models/ssdlite/labelmap.txt
 
 cameras:
   Cam1:

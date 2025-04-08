@@ -279,6 +279,18 @@ RUN apt-get install -y --no-install-recommends memx-accl
 # Debug messages
 RUN echo "Hello from inside MemryX Docker image!"
 
+# Set the working directory for model files
+WORKDIR /memryx_models
+
+# Download and extract MemryX model files
+RUN wget -O yolox.zip https://developer.memryx.com/example_files/1p2_frigate/yolox.zip && unzip yolox.zip && \
+    wget -O ssdlite.zip https://developer.memryx.com/example_files/1p2_frigate/ssdlite.zip && unzip ssdlite.zip && \
+    wget -O yolo_nas.zip https://developer.memryx.com/example_files/1p2_frigate/yolo_nas.zip && unzip yolo_nas.zip && \
+    wget -O yolov9.zip https://developer.memryx.com/example_files/1p2_frigate/yolov9.zip && unzip yolov9.zip
+
+# Set permissions for the models directory
+RUN chmod -R 755 /memryx_models
+
 RUN ldconfig
 
 EXPOSE 5000
