@@ -16,3 +16,7 @@ sudo systemctl enable docker
 sudo groupadd docker
 sudo usermod -aG docker $USER
 
+sudo vim /etc/memryx/mxa_manager.conf 
+sudo service mxa-manager restart
+
+LISTEN_ADDRESS="0.0.0.0"
