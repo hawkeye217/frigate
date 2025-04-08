@@ -57,18 +57,18 @@ class MemryXDetector(DetectionApi):
         self.memx_model_width = detector_config.model.width
         self.memx_model_type = detector_config.model.model_type
 
-        self.cache_dir = "/config/model_cache/memryx_cache"
+        self.cache_dir = "/memryx_models"
 
         if self.memx_model_type == ModelTypeEnum.yolov9:
             self.model_url = "https://developer.memryx.com/model_explorer/1p2/YOLO_v9_small_640_640_3_onnx.zip"
             # self.expected_post_model = "YOLO_v9_small_640_640_3_onnx_post.onnx"
-            self.const_A = np.load("/config/model_cache/memryx_cache/_model_22_Constant_9_output_0.npy")
-            self.const_B = np.load("/config/model_cache/memryx_cache/_model_22_Constant_10_output_0.npy")
-            self.const_C = np.load("/config/model_cache/memryx_cache/_model_22_Constant_12_output_0.npy")  
+            self.const_A = np.load("/memryx_models/yolov9/_model_22_Constant_9_output_0.npy")
+            self.const_B = np.load("/memryx_models/yolov9/_model_22_Constant_10_output_0.npy")
+            self.const_C = np.load("/memryx_models/yolov9/_model_22_Constant_12_output_0.npy")  
 
         elif self.memx_model_type == ModelTypeEnum.yolonas:
             self.model_url = ""
-            self.expected_post_model = "yolo_nas_s_post.onnx"
+            self.expected_post_model = "yolo_nas/yolo_nas_s_post.onnx"
 
         elif self.memx_model_type == ModelTypeEnum.yolox:
             self.model_url = "https://developer.memryx.com/model_explorer/1p2/YOLOX_640_640_3_onnx.zip"
@@ -77,7 +77,7 @@ class MemryXDetector(DetectionApi):
 
         elif self.memx_model_type == ModelTypeEnum.ssd:
             self.model_url = "https://developer.memryx.com/model_explorer/1p2/SSDlite_MobileNet_v2_320_320_3_onnx.zip"
-            self.expected_post_model = "SSDlite_MobileNet_v2_320_320_3_onnx_post.onnx"
+            self.expected_post_model = "ssdlite/SSDlite_MobileNet_v2_320_320_3_onnx_post.onnx"
 
         self.check_and_prepare_model()
         logger.info(f"Initializing MemryX with model: {self.memx_model_path} on device {self.memx_device_path}")
@@ -110,6 +110,7 @@ class MemryXDetector(DetectionApi):
 
         else:
             post_model_file_path = os.path.join(self.cache_dir, self.expected_post_model)
+
             # model_file_path_tflite = os.path.join(self.cache_dir, self.expected_model_filename_tflite)
 
             # Check if both required model files exist
