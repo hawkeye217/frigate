@@ -20,19 +20,19 @@ detectors:
 #   path: /memryx_models/yolo_nas/yolo_nas_s.dfp
 #   labelmap_path: /memryx_models/yolo_nas/labelmap.txt
 
-# model:
-#   model_type: yolox
-#   width: 640
-#   height: 640
-#   path: /memryx_models/yolox/YOLOX_640_640_3_onnx.dfp
-#   labelmap_path: /memryx_models/yolox/labelmap.txt
-
 model:
-  model_type: ssd
-  width: 320
-  height: 320
-  path: /memryx_models/ssdlite/SSDlite_MobileNet_v2_320_320_3_onnx.dfp
-  labelmap_path: /memryx_models/ssdlite/labelmap.txt
+  model_type: yolox
+  width: 640
+  height: 640
+  path: /memryx_models/yolox/YOLOX_640_640_3_onnx.dfp
+  labelmap_path: /memryx_models/yolox/labelmap.txt
+
+# model:
+#   model_type: ssd
+#   width: 320
+#   height: 320
+#   path: /memryx_models/ssdlite/SSDlite_MobileNet_v2_320_320_3_onnx.dfp
+#   labelmap_path: /memryx_models/ssdlite/labelmap.txt
 
 cameras:
   Cam1:
