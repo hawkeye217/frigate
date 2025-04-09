@@ -45,5 +45,12 @@ fi
 echo "Installing mxa-manager..."
 sudo apt install -y memx-accl mxa-manager
 
+# Update the configuration file to set the listen address to 0.0.0.0
+echo "Configuring mxa_manager.conf to listen on 0.0.0.0..."
+sudo sed -i 's/^LISTEN_ADDRESS=.*/LISTEN_ADDRESS="0.0.0.0"/' /etc/memryx/mxa_manager.conf
+
+# Restart mxa-manager service to apply configuration changes
+echo "Restarting mxa-manager service..."
+sudo service mxa-manager restart
 
 echo "MemryX installation complete!"
