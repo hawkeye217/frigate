@@ -36,4 +36,8 @@ echo "Creating docker group (if not exists) and adding current user..."
 sudo groupadd docker || true
 sudo usermod -aG docker $USER
 
+echo "Resetting any failed state on docker.service..."
+sudo systemctl reset-failed docker.service
+
+
 echo "Docker installation complete!"
