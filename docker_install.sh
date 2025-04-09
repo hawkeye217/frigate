@@ -26,3 +26,6 @@ sudo systemctl reset-failed docker.service
 
 sudo ufw status
 sudo ufw allow from 172.17.0.0/24 to any
+
+### sudo lsof-i :5000
+sudo kill <PID>
