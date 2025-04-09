@@ -13,7 +13,7 @@ sudo docker run -d \
   --restart=unless-stopped \
   --mount type=tmpfs,target=/tmp/cache,tmpfs-size=1000000000 \
   --shm-size=256m \
-  -v /home/memryx/final/Frigate_MemryX/config:/config \
+  -v /home/memryx/Frigate_MemryX/config:/config \
   -e FRIGATE_RTSP_PASSWORD='password' \
   --add-host=host.docker.internal:host-gateway \
   --privileged=true \
