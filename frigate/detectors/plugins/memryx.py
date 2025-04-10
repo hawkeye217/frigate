@@ -67,7 +67,7 @@ class MemryXDetector(DetectionApi):
             self.const_C = np.load("/memryx_models/yolov9/_model_22_Constant_12_output_0.npy")  
 
         elif self.memx_model_type == ModelTypeEnum.yolonas:
-            self.model_url = ""
+            self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolo_nas.zip"
             self.expected_post_model = "yolo_nas/yolo_nas_s_post.onnx"
 
         elif self.memx_model_type == ModelTypeEnum.yolox:
