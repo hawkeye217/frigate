@@ -266,17 +266,35 @@ RUN apt-get -qq update && \
     gnupg 
 
 RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --extra-index-url https://developer.memryx.com/pip memryx
+    python3 -m pip install --extra-index-url https://developer.memryx.com/pip memryx~=1.2.0
 
-# Add MemryX repo + key
+# Add MemryX repository and key
 RUN curl -fsSL https://developer.memryx.com/deb/memryx.asc | tee /etc/apt/trusted.gpg.d/memryx.asc && \
     echo "deb https://developer.memryx.com/deb stable main" > /etc/apt/sources.list.d/memryx.list && \
     apt-get update -qq
 
-# Install memx-accl from MemryX repo
-RUN apt-get install -y --no-install-recommends memx-accl
+# Install memx-accl using a custom function that installs the latest 1.2.x version and holds it.
+RUN bash -c '\
+install_and_hold() { \
+  echo "Processing package: $1..."; \
+  local versions; \
+  versions=$(apt-cache policy "$1" | grep -E "^\s*(\*{3}\s*)?1\.2" | awk "{if(\$1==\"***\") print \$2; else print \$1}"); \
+  if [ -z \"$versions\" ]; then \
+    echo "No 1.2 versions found for package $1" >&2; \
+    exit 1; \
+  fi; \
+  local latest; \
+  latest=$(echo "$versions" | sort -V | tail -n 1); \
+  echo "Latest 1.2.x version of $1 is: $latest"; \
+  echo "Installing $1 version $latest..."; \
+  apt install -y "$1=${latest}" || { echo "Installation of $1 version $latest failed." >&2; exit 1; }; \
+  echo "Marking $1 at version $latest as held..."; \
+  apt-mark hold "$1" || { echo "Failed to hold package $1." >&2; exit 1; }; \
+  echo "Package $1 installed and pinned at version $latest successfully."; \
+}; \
+install_and_hold memx-accl'
 
-# Debug messages
+# Debug message
 RUN echo "Hello from inside MemryX Docker image!"
 
 # Set the working directory for model files
