@@ -38,6 +38,7 @@ class MemryXDetector(DetectionApi):
         ModelTypeEnum.ssd,
         ModelTypeEnum.yolonas,
         ModelTypeEnum.yolov9,
+        ModelTypeEnum.yolov8,
         ModelTypeEnum.yolox,
     ]
 
@@ -61,10 +62,15 @@ class MemryXDetector(DetectionApi):
 
         if self.memx_model_type == ModelTypeEnum.yolov9:
             self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolov9.zip"
-            # self.expected_post_model = "YOLO_v9_small_640_640_3_onnx_post.onnx"
+
+        elif self.memx_model_type == ModelTypeEnum.yolov8:
+            self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolov8.zip"
+
+        if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
+            # Shared constants for both yolov8 and yolov9
             self.const_A = np.load("/memryx_models/yolov9/_model_22_Constant_9_output_0.npy")
             self.const_B = np.load("/memryx_models/yolov9/_model_22_Constant_10_output_0.npy")
-            self.const_C = np.load("/memryx_models/yolov9/_model_22_Constant_12_output_0.npy")  
+            self.const_C = np.load("/memryx_models/yolov9/_model_22_Constant_12_output_0.npy")
 
         elif self.memx_model_type == ModelTypeEnum.yolonas:
             self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolo_nas.zip"
@@ -405,7 +411,7 @@ class MemryXDetector(DetectionApi):
 
     def process_output(self, *outputs):
         
-        if self.memx_model_type == ModelTypeEnum.yolov9:
+        if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
             outputs = [np.expand_dims(tensor, axis=0) for tensor in outputs]  # Shape: (1, H, W, C)
 
             # Move channel axis from 3rd (last) position to 1st position → (1, C, H, W)
