@@ -38,6 +38,7 @@ class ModelTypeEnum(str, Enum):
     ssd = "ssd"
     yolox = "yolox"
     yolov9 = "yolov9"
+    yolov8 = "yolov8"
     yolonas = "yolonas"
     yologeneric = "yolo-generic"
 
