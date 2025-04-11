@@ -197,7 +197,7 @@ def async_run_detector(
 ):
     # Set thread and process titles for logging and debugging
     threading.current_thread().name = f"detector:{name}"
-    logger.info(f"Starting MemryX Async detection process: {os.getpid()}")
+    logger.info(f"Starting async detection process: {os.getpid()}")
     setproctitle(f"frigate.detector.{name}")
 
     stop_event = mp.Event()  # Used to gracefully stop threads on signal
@@ -274,7 +274,7 @@ def async_run_detector(
     while not stop_event.is_set():
         time.sleep(1)
 
-    logger.info("Exited MemryX detection process...")
+    logger.info("Exited async detection process...")
 
 
 class ObjectDetectProcess:
