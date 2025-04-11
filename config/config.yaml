@@ -13,6 +13,13 @@ detectors:
 #   path: /memryx_models/yolov9/YOLO_v9_small_640_640_3_onnx.dfp
 #   labelmap_path: /memryx_models/yolov9/labelmap.txt
 
+# model:
+#   model_type: yolov8
+#   width: 640
+#   height: 640
+#   path: /memryx_models/yolov8/YOLO_v8_small_640_640_3_onnx.dfp
+#   labelmap_path: /memryx_models/yolov8/labelmap.txt
+
 model:
   model_type: yolonas
   width: 320
