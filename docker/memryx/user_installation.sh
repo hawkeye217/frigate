@@ -81,6 +81,9 @@ for pkg in "${packages[@]}"; do
 done
 
 # Update the configuration file to set the listen address to 0.0.0.0
+# This is easier containers to connect to the host's manager daemon,
+# since the default addr is 127.0.0.1 and some users might not
+# have docker-host networking allowed
 echo "Configuring mxa_manager.conf to listen on 0.0.0.0..."
 sudo sed -i 's/^LISTEN_ADDRESS=.*/LISTEN_ADDRESS="0.0.0.0"/' /etc/memryx/mxa_manager.conf
 
