@@ -60,7 +60,7 @@ class MemryXDetector(DetectionApi):
         self.cache_dir = "/memryx_models"
 
         if self.memx_model_type == ModelTypeEnum.yolov9:
-            self.model_url = "https://developer.memryx.com/model_explorer/1p2/YOLO_v9_small_640_640_3_onnx.zip"
+            self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolov9.zip"
             # self.expected_post_model = "YOLO_v9_small_640_640_3_onnx_post.onnx"
             self.const_A = np.load("/memryx_models/yolov9/_model_22_Constant_9_output_0.npy")
             self.const_B = np.load("/memryx_models/yolov9/_model_22_Constant_10_output_0.npy")
@@ -71,12 +71,12 @@ class MemryXDetector(DetectionApi):
             self.expected_post_model = "yolo_nas/yolo_nas_s_post.onnx"
 
         elif self.memx_model_type == ModelTypeEnum.yolox:
-            self.model_url = "https://developer.memryx.com/model_explorer/1p2/YOLOX_640_640_3_onnx.zip"
+            self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolox.zip"
             # self.expected_post_model = "YOLOX_640_640_3_onnx_post.onnx"
             self.set_strides_grids()
 
         elif self.memx_model_type == ModelTypeEnum.ssd:
-            self.model_url = "https://developer.memryx.com/model_explorer/1p2/SSDlite_MobileNet_v2_320_320_3_onnx.zip"
+            self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/ssdlite.zip"
             self.expected_post_model = "ssdlite/SSDlite_MobileNet_v2_320_320_3_onnx_post.onnx"
 
         self.check_and_prepare_model()
@@ -110,8 +110,6 @@ class MemryXDetector(DetectionApi):
 
         else:
             post_model_file_path = os.path.join(self.cache_dir, self.expected_post_model)
-
-            # model_file_path_tflite = os.path.join(self.cache_dir, self.expected_model_filename_tflite)
 
             # Check if both required model files exist
             if os.path.isfile(post_model_file_path):
