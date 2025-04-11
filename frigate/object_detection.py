@@ -128,7 +128,65 @@ class LocalObjectDetector(ObjectDetector):
 
         
         return tensor_input
-    
+
+
+def run_detector(
+    name: str,
+    detection_queue: mp.Queue,
+    out_events: dict[str, mp.Event],
+    avg_speed,
+    start,
+    detector_config,
+):
+    threading.current_thread().name = f"detector:{name}"
+    logger = logging.getLogger(f"detector.{name}")
+    logger.info(f"Starting detection process: {os.getpid()}")
+    setproctitle(f"frigate.detector.{name}")
+    listen()
+
+    stop_event = mp.Event()
+
+    def receiveSignal(signalNumber, frame):
+        stop_event.set()
+
+    signal.signal(signal.SIGTERM, receiveSignal)
+    signal.signal(signal.SIGINT, receiveSignal)
+
+    frame_manager = SharedMemoryFrameManager()
+    object_detector = LocalObjectDetector(detector_config=detector_config)
+
+    outputs = {}
+    for name in out_events.keys():
+        out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
+        out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
+        outputs[name] = {"shm": out_shm, "np": out_np}
+
+    while not stop_event.is_set():
+        try:
+            connection_id = detection_queue.get(timeout=1)
+        except queue.Empty:
+            continue
+        input_frame = frame_manager.get(
+            connection_id,
+            (1, detector_config.model.height, detector_config.model.width, 3),
+        )
+
+        if input_frame is None:
+            logger.warning(f"Failed to get frame {connection_id} from SHM")
+            continue
+
+        # detect and send the output
+        start.value = datetime.datetime.now().timestamp()
+        detections = object_detector.detect_raw(input_frame)
+        duration = datetime.datetime.now().timestamp() - start.value
+        frame_manager.close(connection_id)
+        outputs[connection_id]["np"][:] = detections[:]
+        out_events[connection_id].set()
+        start.value = 0.0
+
+        avg_speed.value = (avg_speed.value * 9 + duration) / 10
+
+    logger.info("Exited detection process...")
 
 def async_run_detector(
     name: str,
@@ -218,65 +276,6 @@ def async_run_detector(
         time.sleep(1)
 
     logger.info("Exited MemryX detection process...")
-
-
-def run_detector(
-    name: str,
-    detection_queue: mp.Queue,
-    out_events: dict[str, mp.Event],
-    avg_speed,
-    start,
-    detector_config,
-):
-    threading.current_thread().name = f"detector:{name}"
-    logger = logging.getLogger(f"detector.{name}")
-    logger.info(f"Starting detection process: {os.getpid()}")
-    setproctitle(f"frigate.detector.{name}")
-    listen()
-
-    stop_event = mp.Event()
-
-    def receiveSignal(signalNumber, frame):
-        stop_event.set()
-
-    signal.signal(signal.SIGTERM, receiveSignal)
-    signal.signal(signal.SIGINT, receiveSignal)
-
-    frame_manager = SharedMemoryFrameManager()
-    object_detector = LocalObjectDetector(detector_config=detector_config)
-
-    outputs = {}
-    for name in out_events.keys():
-        out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
-        out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
-        outputs[name] = {"shm": out_shm, "np": out_np}
-
-    while not stop_event.is_set():
-        try:
-            connection_id = detection_queue.get(timeout=1)
-        except queue.Empty:
-            continue
-        input_frame = frame_manager.get(
-            connection_id,
-            (1, detector_config.model.height, detector_config.model.width, 3),
-        )
-
-        if input_frame is None:
-            logger.warning(f"Failed to get frame {connection_id} from SHM")
-            continue
-
-        # detect and send the output
-        start.value = datetime.datetime.now().timestamp()
-        detections = object_detector.detect_raw(input_frame)
-        duration = datetime.datetime.now().timestamp() - start.value
-        frame_manager.close(connection_id)
-        outputs[connection_id]["np"][:] = detections[:]
-        out_events[connection_id].set()
-        start.value = 0.0
-
-        avg_speed.value = (avg_speed.value * 9 + duration) / 10
-
-    logger.info("Exited detection process...")
 
 
 class ObjectDetectProcess:
