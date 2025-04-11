@@ -126,7 +126,6 @@ class LocalObjectDetector(ObjectDetector):
 
         tensor_input = tensor_input.transpose(1, 2, 0, 3)  # Convert from NHWC to HWNC (expected DFP input shape)
 
-        
         return tensor_input
 
 
