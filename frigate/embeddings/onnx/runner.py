@@ -94,6 +94,14 @@ class ONNXModelRunner:
         if self.type == "ov":
             infer_request = self.interpreter.create_infer_request()
 
+            try:
+                # This ensures the model starts with a clean state for each sequence
+                # Important for RNN models like PaddleOCR recognition
+                infer_request.reset_state()
+            except Exception:
+                # this will raise an exception for models with AUTO set as the device
+                pass
+
             outputs = infer_request.infer(input)
 
             return outputs

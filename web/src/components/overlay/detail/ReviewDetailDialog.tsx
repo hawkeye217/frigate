@@ -37,7 +37,6 @@ import {
   MobilePageHeader,
   MobilePageTitle,
 } from "@/components/mobile/MobilePage";
-import { useOverlayState } from "@/hooks/use-overlay-state";
 import { DownloadVideoButton } from "@/components/button/DownloadVideoButton";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
 import { LuSearch } from "react-icons/lu";
@@ -109,10 +108,7 @@ export default function ReviewDetailDialog({
 
   // dialog and mobile page
 
-  const [isOpen, setIsOpen] = useOverlayState(
-    "reviewPane",
-    review != undefined,
-  );
+  const [isOpen, setIsOpen] = useState(review != undefined);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -260,8 +256,9 @@ export default function ReviewDetailDialog({
                               event.label,
                               "size-3 text-primary",
                             )}
-                            {event.sub_label ?? event.label} (
-                            {Math.round(event.data.top_score * 100)}%)
+                            {event.sub_label ??
+                              event.label.replaceAll("_", " ")}{" "}
+                            ({Math.round(event.data.top_score * 100)}%)
                             <Tooltip>
                               <TooltipTrigger>
                                 <div

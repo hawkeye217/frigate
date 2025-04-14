@@ -84,7 +84,6 @@
         "viewInExplore": "在探测中查看"
       },
       "tips": {
-        "mismatch_one": "检测到 {{count}} 个不可用的对象，并已包含在此审核项中。这些对象可能未达到警告或检测标准，或者已被清理/删除。",
         "mismatch_other": "检测到 {{count}} 个不可用的对象，并已包含在此审核项中。这些对象可能未达到警告或检测标准，或者已被清理/删除。",
         "hasMissingObjects": "如果希望 Frigate 保存以下标签的跟踪对象，请调整您的配置：<em>{{objects}}</em>"
       },
@@ -113,7 +112,7 @@
     "objects": "对象",
     "camera": "摄像头",
     "zones": "区域",
-    "timestamp": "时间",
+    "timestamp": "时间戳",
     "button": {
       "findSimilar": "查找相似项",
       "regenerate": {
@@ -171,7 +170,7 @@
   },
   "noTrackedObjects": "未找到跟踪对象",
   "fetchingTrackedObjectsFailed": "获取跟踪对象失败：{{errorMessage}}",
-  "trackedObjectsCount": "{{count}} 个跟踪对象",
+  "trackedObjectsCount": "{{count}} 个跟踪对象 ",
   "searchResult": {
     "deleteTrackedObject": {
       "toast": {

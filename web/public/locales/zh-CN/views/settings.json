@@ -91,7 +91,7 @@
         "label": "立即重建索引",
         "desc": "重建索引将为所有跟踪对象重新生成特征向量。该过程将在后台运行，可能会使CPU满载，所需时间取决于跟踪对象的数量。",
         "confirmTitle": "确认重建索引",
-        "confirmDesc": "确定要为所有跟踪对象重建特征向量索引吗？此过程将在后台运行，但可能会导致CPU满载并耗费较长时间。您可以在探索页面查看进度。", 
+        "confirmDesc": "确定要为所有跟踪对象重建特征向量索引吗？此过程将在后台运行，但可能会导致CPU满载并耗费较长时间。您可以在探索页面查看进度。",
         "confirmButton": "重建索引",
         "success": "重建索引已成功启动。",
         "alreadyInProgress": "重建索引已在执行中。",
@@ -99,7 +99,7 @@
       },
       "modelSize": {
         "label": "模型大小",
-        "desc": "用于语义搜索的语言模型大小",
+        "desc": "用于语义搜索的语言模型大小。",
         "small": {
           "title": "小",
           "desc": "使用 <strong>小</strong>模型。该模型将使用较少的内存，在CPU上也能较快的运行。质量较好。"
@@ -236,13 +236,12 @@
       },
       "add": "添加区域",
       "edit": "编辑区域",
-      "point_one": "{{count}} 点",
       "point_other": "{{count}} 点",
       "clickDrawPolygon": "在图像上点击添加点绘制多边形区域。",
       "name": {
         "title": "区域名称",
-        "inputPlaceHolder": "请输入名称",
-        "tips": "名称至少包含两个字符，且不能和摄像头或其他区域同名。<br>当前仅支持英文与数字组合"
+        "inputPlaceHolder": "请输入名称…",
+        "tips": "名称至少包含两个字符，且不能和摄像头或其他区域同名。<br>当前仅支持英文与数字组合。"
       },
       "inertia": {
         "title": "惯性",
@@ -279,7 +278,7 @@
       "label": "运动遮罩",
       "documentTitle": "编辑运动遮罩 - Frigate",
       "desc": {
-        "title": "运动遮罩用于防止触发不必要的运动类型。过度的设置遮罩将使对象更加难以被追踪",
+        "title": "运动遮罩用于防止触发不必要的运动类型。过度的设置遮罩将使对象更加难以被追踪。",
         "documentation": "文档（英文）"
       },
       "add": "添加运动遮罩",
@@ -288,7 +287,6 @@
         "title": "运动遮罩用于防止不需要的运动类型触发检测（例如：树枝、摄像头显示的时间等）。运动遮罩需要<strong>谨慎使用</strong>，过度的遮罩会导致追踪对象变得更加困难。",
         "documentation": "阅读文档（英文）"
       },
-      "point_one": "{{count}} 点",
       "point_other": "{{count}} 点",
       "clickDrawPolygon": "在图像上点击添加点绘制多边形区域。",
       "polygonAreaTooLarge": {
@@ -313,7 +311,6 @@
       "add": "添加对象遮罩",
       "edit": "编辑对象遮罩",
       "context": "对象过滤器用于防止特定位置的指定对象被误报。",
-      "point_one": "{{count}} 点",
       "point_other": "{{count}} 点",
       "clickDrawPolygon": "在图像上点击添加点绘制多边形区域。",
       "objects": {
@@ -385,14 +382,14 @@
     },
     "regions": {
       "title": "范围",
-      "desc": "显示发送到运动检测器感兴趣范围的框。",
+      "desc": "显示发送到运动检测器感兴趣范围的框",
       "tips": "<p className=\"mb-2\"><strong>范围框</strong></p><br><p>将在帧中发送到目标检测器的感兴趣范围上叠加绿色框。</p>"
     },
     "objectShapeFilterDrawing": {
       "title": "允许绘制“对象形状过滤器”",
-      "desc": "在图像上绘制矩形，以查看区域和比例详细信息。",
+      "desc": "在图像上绘制矩形，以查看区域和比例详细信息",
       "tips": "启用此选项，能够在摄像头图像上绘制矩形，将显示其区域和比例。然后，您可以使用这些值在配置中设置对象形状过滤器参数。",
-      "document": "阅读文档（英文）",
+      "document": "阅读文档（英文） ",
       "score": "分数",
       "ratio": "比例",
       "area": "区域"
@@ -410,7 +407,7 @@
       "success": {
         "createUser": "用户 {{user}} 创建成功",
         "deleteUser": "用户 {{user}} 删除成功",
-        "updatePassword": "已成功修改密码",
+        "updatePassword": "已成功修改密码。",
         "roleUpdated": "已更新 {{user}} 的权限组"
       },
       "error": {
@@ -444,7 +441,7 @@
             "placeholder": "请再次输入密码"
           },
           "strength": {
-            "title": "密码强度：",
+            "title": "密码强度： ",
             "weak": "弱",
             "medium": "中等",
             "strong": "强",
@@ -549,7 +546,7 @@
       "title": "快照配置",
       "desc": "提交到 Frigate+ 需要同时在配置中启用快照和 <code>clean_copy</code> 快照。",
       "documentation": "阅读文档",
-      "cleanCopyWarning": "部分摄像头已启用快照但未启用 <code>clean_copy</code>。您需要在快照配置中启用 <code>clean_copy</code>，才能将这些摄像头的图像提交到 Frigate+。",
+      "cleanCopyWarning": "部分摄像头已启用快照但未启用 clean_copy。您需要在快照配置中启用 <code>clean_copy</code>，才能将这些摄像头的图像提交到 Frigate+。",
       "table": {
         "camera": "摄像头",
         "snapshots": "快照",

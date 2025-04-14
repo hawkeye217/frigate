@@ -27,7 +27,7 @@ Frigate supports multiple different detectors that work on different types of ha
 **Nvidia**
 
 - [TensortRT](#nvidia-tensorrt-detector): TensorRT can run on Nvidia GPUs and Jetson devices, using one of many default models.
-- [ONNX](#onnx): TensorRT will automatically be detected and used as a detector in the `-tensorrt` or `-tensorrt-jp(4/5)` Frigate images when a supported ONNX model is configured.
+- [ONNX](#onnx): TensorRT will automatically be detected and used as a detector in the `-tensorrt` or `-tensorrt-jp6` Frigate images when a supported ONNX model is configured.
 
 **Rockchip**
 
@@ -163,6 +163,7 @@ model:
   input_pixel_format: rgb
   input_dtype: int
   model_type: yolo-generic
+  labelmap_path: /labelmap/coco-80.txt
 
   # The detector automatically selects the default model based on your hardware:
   # - For Hailo-8 hardware: YOLOv6n (default: yolov6n.hef)
@@ -219,6 +220,7 @@ model:
   input_pixel_format: rgb
   input_dtype: int
   model_type: yolo-generic
+  labelmap_path: /labelmap/coco-80.txt
   # Optional: Specify a local model path.
   # path: /config/model_cache/hailo/custom_model.hef
   #
