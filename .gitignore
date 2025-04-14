@@ -5,13 +5,13 @@ __pycache__
 debug
 .vscode/*
 !.vscode/launch.json
-# config/*
+config/*
 !config/*.example
 models
 *.mp4
 *.db
 *.csv
-# frigate/version.py
+frigate/version.py
 web/build
 web/node_modules
 web/coverage
