@@ -139,7 +139,6 @@ def run_detector(
         avg_speed.value = (avg_speed.value * 9 + duration) / 10
 
     logger.info("Exited detection process...")
-    return self.detect_api.detect_raw(tensor_input=tensor_input)
 
 
 def async_run_detector(
