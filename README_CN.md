@@ -12,7 +12,7 @@
 
 一个完整的本地网络视频录像机（NVR），专为[Home Assistant](https://www.home-assistant.io)设计，具备AI物体检测功能。使用OpenCV和TensorFlow在本地为IP摄像头执行实时物体检测。
 
-强烈推荐使用GPU或者AI加速器（例如[Google Coral加速器](https://coral.ai/products/) 或者 [Hailo](https://hailo.ai/)）。它们的性能甚至超过目前的顶级CPU，并且可以以极低的耗电实现更优的性能。
+强烈推荐使用GPU或者AI加速器（例如[Google Coral加速器](https://coral.ai/products/) 或者 [Hailo](https://hailo.ai/) 或者 [MemryX](https://memryx.com)）。它们的性能甚至超过目前的顶级CPU，并且可以以极低的耗电实现更优的性能。
 - 通过[自定义组件](https://github.com/blakeblackshear/frigate-hass-integration)与Home Assistant紧密集成
 - 设计上通过仅在必要时和必要地点寻找物体，最大限度地减少资源使用并最大化性能
 - 大量利用多进程处理，强调实时性而非处理每一帧
