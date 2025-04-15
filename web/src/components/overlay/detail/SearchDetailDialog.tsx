@@ -288,7 +288,7 @@ function ObjectDetailsTab({
   setSimilarity,
   setInputFocused,
 }: ObjectDetailsTabProps) {
-  const { t } = useTranslation(["views/explore"]);
+  const { t } = useTranslation(["views/explore", "views/faceLibrary"]);
 
   const apiHost = useApiHost();
 
@@ -325,7 +325,7 @@ function ObjectDetailsTab({
     config?.ui.timezone,
   );
 
-  const score = useMemo(() => {
+  const topScore = useMemo(() => {
     if (!search) {
       return 0;
     }
@@ -362,6 +362,16 @@ function ObjectDetailsTab({
     } else {
       return undefined;
     }
+  }, [search]);
+
+  const snapScore = useMemo(() => {
+    if (!search?.has_snapshot) {
+      return 0;
+    }
+
+    const value = search.data.score ?? search.score ?? 0;
+
+    return Math.floor(value * 100);
   }, [search]);
 
   const averageEstimatedSpeed = useMemo(() => {
@@ -664,9 +674,12 @@ function ObjectDetailsTab({
         .post(`/faces/train/${trainName}/classify`, { event_id: search.id })
         .then((resp) => {
           if (resp.status == 200) {
-            toast.success(t("toast.success.trainedFace"), {
-              position: "top-center",
-            });
+            toast.success(
+              t("toast.success.trainedFace", { ns: "views/faceLibrary" }),
+              {
+                position: "top-center",
+              },
+            );
           }
         })
         .catch((error) => {
@@ -674,9 +687,15 @@ function ObjectDetailsTab({
             error.response?.data?.message ||
             error.response?.data?.detail ||
             "Unknown error";
-          toast.error(t("toast.error.trainFailed", { errorMessage }), {
-            position: "top-center",
-          });
+          toast.error(
+            t("toast.error.trainFailed", {
+              ns: "views/faceLibrary",
+              errorMessage,
+            }),
+            {
+              position: "top-center",
+            },
+          );
         });
     },
     [search, t],
@@ -764,9 +783,19 @@ function ObjectDetailsTab({
               </div>
             </div>
             <div className="text-sm">
-              {score}%{subLabelScore && ` (${subLabelScore}%)`}
+              {topScore}%{subLabelScore && ` (${subLabelScore}%)`}
             </div>
           </div>
+          {snapScore && (
+            <div className="flex flex-col gap-1.5">
+              <div className="text-sm text-primary/40">
+                <div className="flex flex-row items-center gap-1">
+                  {t("details.snapshotScore.label")}
+                </div>
+              </div>
+              <div className="text-sm">{snapScore}%</div>
+            </div>
+          )}
           {averageEstimatedSpeed && (
             <div className="flex flex-col gap-1.5">
               <div className="text-sm text-primary/40">
