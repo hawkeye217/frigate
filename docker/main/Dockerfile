@@ -249,7 +249,7 @@ COPY --from=deps-rootfs / /
 #
 # MemryX Support
 #
-# 1.  Install system dependencies and Python packages
+# 1. Install system dependencies and Python packages
 # 2. Add MemryX repo and install memx-accl
 #
 ####
@@ -266,7 +266,7 @@ RUN apt-get -qq update && \
     gnupg 
 
 RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --extra-index-url https://developer.memryx.com/pip memryx~=1.2.0
+    python3 -m pip install --extra-index-url https://developer.memryx.com/pip "memryx~=1.2.0"
 
 # Add MemryX repository and key
 RUN curl -fsSL https://developer.memryx.com/deb/memryx.asc | tee /etc/apt/trusted.gpg.d/memryx.asc && \
@@ -294,9 +294,6 @@ install_and_hold() { \
 }; \
 install_and_hold memx-accl'
 
-# Debug message
-RUN echo "Hello from inside MemryX Docker image!"
-
 # Set the working directory for model files
 WORKDIR /memryx_models
 
@@ -309,6 +306,8 @@ RUN wget -O yolox.zip https://developer.memryx.com/example_files/1p2_frigate/yol
 
 # Set permissions for the models directory
 RUN chmod -R 755 /memryx_models
+
+###### End MemryX setup
 
 RUN ldconfig
 

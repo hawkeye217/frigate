@@ -176,7 +176,7 @@ def async_run_detector(
         outputs[name] = {"shm": out_shm, "np": out_np}
 
     def detect_worker():
-        # """Continuously fetch frames and send them to the detector accelerator."""
+        # Continuously fetch frames and send them to the async detector
         logger.info("Starting Detect Worker Thread")
         while not stop_event.is_set():
             try:
@@ -199,7 +199,7 @@ def async_run_detector(
             object_detector.detect_api.send_input(connection_id, input_frame)
 
     def result_worker():
-        # """Continuously receive detection results from detector accelerator."""
+        # Continuously receive detection results from the async detector
         logger.info("Starting Result Worker Thread")
         while not stop_event.is_set():
             connection_id, detections = object_detector.detect_api.receive_output()
@@ -226,9 +226,9 @@ def async_run_detector(
 
     # Keep the main process alive while threads run
     while not stop_event.is_set():
-        time.sleep(1)
+        time.sleep(5)
 
-    logger.info("Exited detection process...")
+    logger.info("Exited async detection process...")
 
 
 
@@ -266,7 +266,8 @@ class ObjectDetectProcess:
         self.detection_start.value = 0.0
         if (self.detect_process is not None) and self.detect_process.is_alive():
             self.stop()
-        if (self.detector_config.type == 'memryx'):  # MemryX requires asynchronous detection handling using async_run_detector
+        if (self.detector_config.type == 'memryx'):
+            # MemryX requires asynchronous detection handling using async_run_detector
             self.detect_process = util.Process(
                 target=async_run_detector,
                 name=f"detector:{self.name}",

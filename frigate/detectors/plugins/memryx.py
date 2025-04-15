@@ -43,13 +43,13 @@ class MemryXDetector(DetectionApi):
     ]
 
     def __init__(self, detector_config):
+        """Initialize MemryX detector with the provided configuration."""
 
         self.capture_queue = Queue(maxsize=10)
         self.output_queue = Queue(maxsize=10)
         self.capture_id_queue = Queue(maxsize=10)
         self.logger = logger
 
-        """Initialize MemryX detector with the provided configuration."""
         self.memx_model_path = detector_config.model.path  # Path to .dfp file
         self.memx_post_model =  None # Path to .post file
         self.expected_post_model = None
@@ -67,7 +67,7 @@ class MemryXDetector(DetectionApi):
             self.model_url = "https://developer.memryx.com/example_files/1p2_frigate/yolov8.zip"
 
         if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
-            # Shared constants for both yolov8 and yolov9
+            # Shared constants for both yolov8 and yolov9 post-processing
             self.const_A = np.load("/memryx_models/yolov9/_model_22_Constant_9_output_0.npy")
             self.const_B = np.load("/memryx_models/yolov9/_model_22_Constant_10_output_0.npy")
             self.const_C = np.load("/memryx_models/yolov9/_model_22_Constant_12_output_0.npy")
@@ -91,13 +91,16 @@ class MemryXDetector(DetectionApi):
             # Load MemryX Model
             logger.info(f"dfp path: {self.memx_model_path}")
 
-            # Your initialization code
+            # Initialization code
             self.accl = AsyncAccl(self.memx_model_path, mxserver_addr="host.docker.internal")
+
+            # Models that use cropped post-processing sections (YOLO-NAS and SSD)
+            # --> These will be moved to pure numpy in the future to improve performance on low-end CPUs
             if self.memx_post_model:
                 self.accl.set_postprocessing_model(self.memx_post_model, model_idx=0)
+
             self.accl.connect_input(self.process_input)
             self.accl.connect_output(self.process_output)
-            # self.accl.wait()  # This ensures a clean exit, but Frigate manages process termination
 
             logger.info(f"Loaded MemryX model from {self.memx_model_path} and {self.memx_post_model}")
 
@@ -147,7 +150,7 @@ class MemryXDetector(DetectionApi):
                 logger.info("Cleaned up ZIP file after extraction.")
 
     def send_input(self, connection_id,  tensor_input: np.ndarray):
-        """Send frame directly to MemryX processing."""
+        """Pre-process (if needed) and send frame to MemryX input queue"""
         if tensor_input is None:
             raise ValueError("[send_input] No image data provided for inference")
         
@@ -184,9 +187,7 @@ class MemryXDetector(DetectionApi):
         self.capture_id_queue.put(connection_id)
 
     def process_input(self):
-        """
-        Wait for frames in the queue, preprocess the image, and return it.
-        """
+        """Input callback function: wait for frames in the input queue, preprocess, and send to MX3 (return)"""
         while True:
             try:
                 # Wait for a frame from the queue (blocking call)
@@ -199,8 +200,7 @@ class MemryXDetector(DetectionApi):
                 time.sleep(0.1)  # Prevent busy waiting in case of error
 
     def receive_output(self):
-
-        """Retrieve processed results directly from MemryX."""
+        """Retrieve processed results from MemryX output queue + a copy of the original frame"""
         connection_id = self.capture_id_queue.get()  # Get the corresponding connection ID
         detections = self.output_queue.get()  # Get detections from MemryX
 
@@ -232,9 +232,11 @@ class MemryXDetector(DetectionApi):
         # Return the list of final detections
         self.output_queue.put(detections)
 
-    ## Takes in class ID, confidence score, and array of [x, y, w, h] that describes detection position,
-    ## returns an array that's easily passable back to Frigate.
     def process_yolo(self, class_id, conf, pos):
+        """
+        Takes in class ID, confidence score, and array of [x, y, w, h] that describes detection position,
+        returns an array that's easily passable back to Frigate.
+        """
         return [
             class_id,  # class ID
             conf,  # confidence score
@@ -434,7 +436,7 @@ class MemryXDetector(DetectionApi):
         return reshaped
 
     def process_output(self, *outputs):
-        
+        """Output callback function -- receives frames from the MX3 and triggers post-processing""" 
         if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
             outputs = [np.expand_dims(tensor, axis=0) for tensor in outputs]  # Shape: (1, H, W, C)
 
@@ -538,8 +540,5 @@ class MemryXDetector(DetectionApi):
             )
         
     def detect_raw(self, tensor_input: np.ndarray):
-        """
-        Run inference on the input image and return raw results.
-        tensor_input: Preprocessed image (normalized & resized)
-        """
+        """ Removed synchronous detect_raw() function so that we only use async """
         return 0
