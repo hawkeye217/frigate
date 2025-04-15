@@ -139,7 +139,7 @@ def run_detector(
         avg_speed.value = (avg_speed.value * 9 + duration) / 10
 
     logger.info("Exited detection process...")
-    return self.detect_api.detect_raw(tensor_input=tensor_input)   
+    return self.detect_api.detect_raw(tensor_input=tensor_input)
 
 
 def async_run_detector(
@@ -194,7 +194,7 @@ def async_run_detector(
                 logger.warning(f"Failed to get frame {connection_id} from SHM")
                 continue
 
-            #send input to Accelator
+            # send input to Accelator
             start.value = datetime.datetime.now().timestamp()
             object_detector.detect_api.send_input(connection_id, input_frame)
 
@@ -231,7 +231,6 @@ def async_run_detector(
     logger.info("Exited async detection process...")
 
 
-
 class ObjectDetectProcess:
     def __init__(
         self,
@@ -266,7 +265,7 @@ class ObjectDetectProcess:
         self.detection_start.value = 0.0
         if (self.detect_process is not None) and self.detect_process.is_alive():
             self.stop()
-        if (self.detector_config.type == 'memryx'):
+        if self.detector_config.type == "memryx":
             # MemryX requires asynchronous detection handling using async_run_detector
             self.detect_process = util.Process(
                 target=async_run_detector,
@@ -292,7 +291,7 @@ class ObjectDetectProcess:
                     self.detection_start,
                     self.detector_config,
                 ),
-        )
+            )
         self.detect_process.daemon = True
         self.detect_process.start()
 
