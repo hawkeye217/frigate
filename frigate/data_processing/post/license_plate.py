@@ -11,7 +11,6 @@ from frigate.comms.embeddings_updater import EmbeddingsRequestEnum
 from frigate.comms.event_metadata_updater import EventMetadataPublisher
 from frigate.config import FrigateConfig
 from frigate.data_processing.common.license_plate.mixin import (
-    WRITE_DEBUG_IMAGES,
     LicensePlateProcessingMixin,
 )
 from frigate.data_processing.common.license_plate.model import (
@@ -65,10 +64,18 @@ class LicensePlatePostProcessor(LicensePlateProcessingMixin, PostProcessorApi):
             frame_time = obj_data["frame_time"]
             recordings_available_through = data["recordings_available"]
 
+            # TODO: maybe reprocess if low score as well?
+            if obj_data["recognized_license_plate"] is not None:
+                logger.debug(
+                    f"LPR post processing: Not re-processing a recognized license plate {obj_data['recognized_license_plate']}"
+                )
+                # return
+
             if frame_time > recordings_available_through:
                 logger.debug(
                     f"LPR post processing: No recordings available for this frame time {frame_time}, available through {recordings_available_through}"
                 )
+                return
 
         elif data_type == PostProcessDataEnum.tracked_object:
             # non-functional, need to think about snapshot time
@@ -99,6 +106,7 @@ class LicensePlatePostProcessor(LicensePlateProcessingMixin, PostProcessorApi):
         )
 
         try:
+            logger.debug(f"LPR post-processing: running {event_id}")
             recording: Recordings = recording_query.get()
             time_in_segment = frame_time - recording.start_time
             codec = "mjpeg"
@@ -125,9 +133,10 @@ class LicensePlatePostProcessor(LicensePlateProcessingMixin, PostProcessorApi):
             logger.debug("Error fetching license plate for postprocessing")
             return
 
-        if WRITE_DEBUG_IMAGES:
+        current_time = int(datetime.datetime.now().timestamp())
+        if True:
             cv2.imwrite(
-                f"debug/frames/lpr_post_{datetime.datetime.now().timestamp()}.jpg",
+                f"debug/frames/lpr_post_{current_time}.jpg",
                 image,
             )
 
@@ -156,20 +165,33 @@ class LicensePlatePostProcessor(LicensePlateProcessingMixin, PostProcessorApi):
             box = [left, top, right, bottom]
         else:
             # Get the license plate box from attributes
-            if not obj_data.get("current_attributes"):
+            if (
+                not obj_data.get("current_attributes")
+                and obj_data.get("label") != "license_plate"
+            ):
                 return
 
             license_plate = None
-            for attr in obj_data["current_attributes"]:
-                if attr.get("label") != "license_plate":
-                    continue
-                if license_plate is None or attr.get("score", 0.0) > license_plate.get(
-                    "score", 0.0
-                ):
-                    license_plate = attr
+            if obj_data.get("label") in ["car", "motorcycle"]:
+                attributes: list[dict[str, any]] = obj_data.get(
+                    "current_attributes", []
+                )
+                for attr in attributes:
+                    if attr.get("label") != "license_plate":
+                        continue
 
-            if not license_plate or not license_plate.get("box"):
-                return
+                    if license_plate is None or attr.get(
+                        "score", 0.0
+                    ) > license_plate.get("score", 0.0):
+                        license_plate = attr
+
+                # no license plates detected in this frame
+                if not license_plate:
+                    return
+
+            # we are using dedicated lpr with frigate+
+            if obj_data.get("label") == "license_plate":
+                license_plate = obj_data
 
             # Scale license plate box to detection dimensions
             orig_box = license_plate["box"]
@@ -206,6 +228,22 @@ class LicensePlatePostProcessor(LicensePlateProcessingMixin, PostProcessorApi):
                 else:
                     new_attributes.append(attr)
             keyframe_obj_data["current_attributes"] = new_attributes
+
+        if True:
+            debug_image = image.copy()
+
+            box = keyframe_obj_data["box"]
+            cv2.rectangle(
+                debug_image,
+                (box[0], box[1]),
+                (box[2], box[3]),
+                color=(0, 255, 0),
+                thickness=2,
+            )
+
+            cv2.imwrite(
+                f"debug/frames/postprocess_boxes_{current_time}.jpg", debug_image
+            )
 
         # run the frame through lpr processing
         logger.debug(f"Post processing plate: {event_id}, {frame_time}")

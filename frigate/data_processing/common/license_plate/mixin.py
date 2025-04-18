@@ -1546,6 +1546,7 @@ class LicensePlateProcessingMixin:
         return
 
     def expire_object(self, object_id: str):
+        logger.debug(f"Expiring plate (mixin): {object_id}")
         if object_id in self.detected_license_plates:
             self.detected_license_plates.pop(object_id)
 

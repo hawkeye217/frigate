@@ -254,6 +254,11 @@ class CameraState:
         new_ids = current_ids.difference(previous_ids)
         updated_ids = current_ids.intersection(previous_ids)
 
+        if current_ids or previous_ids or removed_ids or new_ids or updated_ids:
+            logger.debug(
+                f"current_ids: {current_ids}, previous_ids: {previous_ids}, removed_ids: {removed_ids}, new_ids: {new_ids}, updated_ids: {updated_ids}"
+            )
+
         for id in new_ids:
             new_obj = tracked_objects[id] = TrackedObject(
                 self.config.model,

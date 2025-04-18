@@ -263,7 +263,12 @@ class EmbeddingMaintainer(threading.Thread):
             return
 
         for processor in self.realtime_processors:
-            processor.process_frame(data, yuv_frame)
+            if isinstance(processor, LicensePlateRealTimeProcessor):
+                print(f"LPR: Processing frame {data['frame_time']}")
+                processor.process_frame(data, yuv_frame)
+                print(f"LPR: Done processing frame {data['frame_time']}")
+            else:
+                processor.process_frame(data, yuv_frame)
 
         # no need to save our own thumbnails if genai is not enabled
         # or if the object has become stationary

@@ -146,6 +146,9 @@ class TrackedObject:
                     self.camera_config.frame_shape,
                 )
             ):
+                logger.debug(
+                    f"thumbnail data: {self.thumbnail_data is not None}, has better thumbnail? {better_thumb}"
+                )
                 # use the current frame time if the object's frame time isn't in the frame cache
                 selected_frame_time = (
                     current_frame_time
@@ -354,6 +357,9 @@ class TrackedObject:
 
         self.obj_data.update(obj_data)
         self.current_zones = current_zones
+        logger.debug(
+            f"thumb update? {thumb_update}, significant change? {significant_change}, path update? {path_update}, autotracker update? {autotracker_update}"
+        )
         return (thumb_update, significant_change, path_update, autotracker_update)
 
     def to_dict(self):
