@@ -256,7 +256,7 @@ RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels \
 
 COPY --from=deps-rootfs / /
 
-# Add MemryX APT repo & install memx-accl
+# Install memx-accl using a custom function that installs the latest 1.2.x version and holds it.
 RUN curl -fsSL https://developer.memryx.com/deb/memryx.asc | tee /etc/apt/trusted.gpg.d/memryx.asc && \
     echo "deb https://developer.memryx.com/deb stable main" > /etc/apt/sources.list.d/memryx.list && \
     apt-get update -qq && \
