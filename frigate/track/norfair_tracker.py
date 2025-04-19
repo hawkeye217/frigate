@@ -1,6 +1,7 @@
 import logging
 import random
 import string
+from io import StringIO
 from typing import Sequence
 
 import cv2
@@ -13,7 +14,6 @@ from norfair import (
     draw_boxes,
 )
 from norfair.drawing.drawer import Drawer
-from rich import print
 from rich.console import Console
 from rich.table import Table
 
@@ -587,8 +587,6 @@ class NorfairTracker(ObjectTracker):
 
     def print_objects_as_table(self, tracked_objects: Sequence):
         """Used for helping in debugging"""
-        print()
-        console = Console()
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Id", style="yellow", justify="center")
         table.add_column("Age", justify="right")
@@ -603,7 +601,12 @@ class NorfairTracker(ObjectTracker):
                 f"{obj.last_distance:.4f}" if obj.last_distance is not None else "N/A",
                 str(obj.initializing_id),
             )
+        string_io = StringIO()
+        console = Console(file=string_io, width=120)
         console.print(table)
+        table_str = string_io.getvalue()
+
+        logger.debug(f"Tracked objects table:\n{table_str}")
 
     def debug_draw(self, frame, frame_time):
         # Collect all tracked objects from each tracker
@@ -617,11 +620,10 @@ class NorfairTracker(ObjectTracker):
                         len(self.trackers["license_plate"]["static"].tracked_objects)
                         > 0
                     ):
-                        print(f"\n\n--- frame time: {frame_time} ---")
+                        logger.debug(f"--- frame time: {frame_time} ---")
                         self.print_objects_as_table(
                             self.trackers["license_plate"]["static"].tracked_objects
                         )
-                        print("\n")
                         return
 
         # Get tracked objects from type-specific trackers

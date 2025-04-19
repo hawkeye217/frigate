@@ -254,7 +254,9 @@ class CameraState:
         new_ids = current_ids.difference(previous_ids)
         updated_ids = current_ids.intersection(previous_ids)
 
-        if current_ids or previous_ids or removed_ids or new_ids or updated_ids:
+        if (
+            current_ids or previous_ids or removed_ids or new_ids or updated_ids
+        ) and self.name in ["LPR-1", "LPR-2", "lpr-night"]:
             logger.debug(
                 f"current_ids: {current_ids}, previous_ids: {previous_ids}, removed_ids: {removed_ids}, new_ids: {new_ids}, updated_ids: {updated_ids}"
             )

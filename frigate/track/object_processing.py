@@ -85,7 +85,8 @@ class TrackedObjectProcessor(threading.Thread):
         self.active_zone_data = defaultdict(lambda: defaultdict(dict))
 
         def start(camera: str, obj: TrackedObject, frame_name: str):
-            logger.debug(f"starting event {obj.to_dict()}")
+            if camera in ["LPR-1", "LPR-2", "lpr-night"]:
+                logger.debug(f"starting event {obj.to_dict()}")
             self.event_sender.publish(
                 (
                     EventTypeEnum.tracked_object,
@@ -97,7 +98,8 @@ class TrackedObjectProcessor(threading.Thread):
             )
 
         def update(camera: str, obj: TrackedObject, frame_name: str):
-            logger.debug(f"updating event {obj.to_dict()}")
+            if camera in ["LPR-1", "LPR-2", "lpr-night"]:
+                logger.debug(f"updating event {obj.to_dict()}")
             obj.has_snapshot = self.should_save_snapshot(camera, obj)
             obj.has_clip = self.should_retain_recording(camera, obj)
             after = obj.to_dict()
@@ -134,7 +136,8 @@ class TrackedObjectProcessor(threading.Thread):
             if obj.has_snapshot:
                 obj.write_snapshot_to_disk()
 
-            logger.debug(f"end event {obj.to_dict()}")
+            if camera in ["LPR-1", "LPR-2", "lpr-night"]:
+                logger.debug(f"end event {obj.to_dict()}")
 
             if not obj.false_positive:
                 message = {

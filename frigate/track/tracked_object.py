@@ -136,6 +136,11 @@ class TrackedObject:
         self.false_positive = self._is_false_positive()
         self.active = self.is_active()
 
+        if self.camera_config.name in ["LPR-1", "LPR-2", "lpr-night"]:
+            logger.debug(
+                f"calling tracked object's update(): obj frame time: {obj_data['frame_time']}, current frame time: {current_frame_time}, frame cache keys: {self.frame_cache.keys()}"
+            )
+
         if not self.false_positive and has_valid_frame:
             # determine if this frame is a better thumbnail
             if self.thumbnail_data is None or (
@@ -146,9 +151,10 @@ class TrackedObject:
                     self.camera_config.frame_shape,
                 )
             ):
-                logger.debug(
-                    f"thumbnail data: {self.thumbnail_data is not None}, has better thumbnail? {better_thumb}"
-                )
+                if self.camera_config.name in ["LPR-1", "LPR-2", "lpr-night"]:
+                    logger.debug(
+                        f"thumbnail data: {self.thumbnail_data is not None}, has better thumbnail? {better_thumb}"
+                    )
                 # use the current frame time if the object's frame time isn't in the frame cache
                 selected_frame_time = (
                     current_frame_time
