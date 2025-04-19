@@ -155,37 +155,29 @@ class TrackedObject:
                     logger.debug(
                         f"thumbnail data: {self.thumbnail_data is not None}, has better thumbnail? {better_thumb}"
                     )
-                # use the current frame time if the object's frame time isn't in the frame cache
-                selected_frame_time = (
-                    current_frame_time
-                    if obj_data["frame_time"] not in self.frame_cache.keys()
-                    else obj_data["frame_time"]
-                )
-                if (
-                    obj_data["frame_time"] not in self.frame_cache.keys()
-                    and not better_thumb
-                ):
-                    logger.warning(
-                        f"Frame time {obj_data['frame_time']} not in frame cache, using current frame time {selected_frame_time}"
+                if obj_data["frame_time"] not in self.frame_cache.keys():
+                    logger.debug(
+                        f"Frame time {obj_data['frame_time']} not in frame cache"
                     )
-                self.thumbnail_data = {
-                    "frame_time": selected_frame_time,
-                    "box": obj_data["box"],
-                    "area": obj_data["area"],
-                    "region": obj_data["region"],
-                    "score": obj_data["score"],
-                    "attributes": obj_data["attributes"],
-                    "current_estimated_speed": self.current_estimated_speed,
-                    "velocity_angle": self.velocity_angle,
-                    "path_data": self.path_data,
-                    "recognized_license_plate": obj_data.get(
-                        "recognized_license_plate"
-                    ),
-                    "recognized_license_plate_score": obj_data.get(
-                        "recognized_license_plate_score"
-                    ),
-                }
-                thumb_update = True
+                else:
+                    self.thumbnail_data = {
+                        "frame_time": obj_data["frame_time"],
+                        "box": obj_data["box"],
+                        "area": obj_data["area"],
+                        "region": obj_data["region"],
+                        "score": obj_data["score"],
+                        "attributes": obj_data["attributes"],
+                        "current_estimated_speed": self.current_estimated_speed,
+                        "velocity_angle": self.velocity_angle,
+                        "path_data": self.path_data,
+                        "recognized_license_plate": obj_data.get(
+                            "recognized_license_plate"
+                        ),
+                        "recognized_license_plate_score": obj_data.get(
+                            "recognized_license_plate_score"
+                        ),
+                    }
+                    thumb_update = True
 
         # check zones
         current_zones = []
