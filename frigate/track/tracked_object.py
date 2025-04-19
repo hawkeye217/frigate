@@ -155,9 +155,9 @@ class TrackedObject:
                     logger.debug(
                         f"thumbnail data: {self.thumbnail_data is not None}, has better thumbnail? {better_thumb}"
                     )
-                if obj_data["frame_time"] not in self.frame_cache.keys():
+                if obj_data["frame_time"] != current_frame_time:
                     logger.debug(
-                        f"Frame time {obj_data['frame_time']} not in frame cache"
+                        f"Object Frame time {obj_data['frame_time']} not equal to current frame time {current_frame_time}"
                     )
                 else:
                     self.thumbnail_data = {
