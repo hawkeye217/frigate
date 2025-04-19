@@ -611,13 +611,18 @@ class NorfairTracker(ObjectTracker):
 
         # print a table to the console with norfair tracked object info
         if True:
-            if len(self.trackers["license_plate"]["static"].tracked_objects) > 0:
-                print(f"\n\n--- frame time: {frame_time} ---")
-                self.print_objects_as_table(
-                    self.trackers["license_plate"]["static"].tracked_objects
-                )
-                print("\n")
-                return
+            if "license_plate" in self.trackers:
+                if "static" in self.trackers["license_plate"]:
+                    if (
+                        len(self.trackers["license_plate"]["static"].tracked_objects)
+                        > 0
+                    ):
+                        print(f"\n\n--- frame time: {frame_time} ---")
+                        self.print_objects_as_table(
+                            self.trackers["license_plate"]["static"].tracked_objects
+                        )
+                        print("\n")
+                        return
 
         # Get tracked objects from type-specific trackers
         for object_trackers in self.trackers.values():
