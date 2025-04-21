@@ -138,9 +138,6 @@ RUN wget -q https://github.com/openvinotoolkit/open_model_zoo/raw/master/data/da
 RUN wget -qO - https://www.kaggle.com/api/v1/models/google/yamnet/tfLite/classification-tflite/1/download | tar xvz && mv 1.tflite cpu_audio_model.tflite
 COPY audio-labelmap.txt .
 
-# Copy 81 class coco label map
-RUN wget -O coco_81class_labelmap.txt https://developer.memryx.com/example_files/1p2_frigate/labelmap.txt
-
 
 FROM wget AS s6-overlay
 ARG TARGETARCH
