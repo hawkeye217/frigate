@@ -257,21 +257,7 @@ COPY --from=deps-rootfs / /
 RUN curl -fsSL https://developer.memryx.com/deb/memryx.asc | tee /etc/apt/trusted.gpg.d/memryx.asc && \
     echo "deb https://developer.memryx.com/deb stable main" > /etc/apt/sources.list.d/memryx.list && \
     apt-get update -qq && \
-    bash -c '\
-    install_and_hold() { \
-      echo "Processing package: $1..."; \
-      local versions; \
-      versions=$(apt-cache policy "$1" | grep -E "^\s*(\*{3}\s*)?1\.2" | awk "{if(\$1==\"***\") print \$2; else print \$1}"); \
-      if [ -z \"$versions\" ]; then \
-        echo "No 1.2 versions found for package $1" >&2; exit 1; \
-      fi; \
-      local latest; \
-      latest=$(echo "$versions" | sort -V | tail -n 1); \
-      echo "Installing $1 version $latest..."; \
-      apt install -y --no-install-recommends "$1=${latest}" || { echo "Install failed." >&2; exit 1; }; \
-      apt-mark hold "$1"; \
-    }; \
-    install_and_hold memx-accl'
+    apt-get install -y --no-install-recommends memx-accl=1.2.2-1
 
 RUN ldconfig
 
