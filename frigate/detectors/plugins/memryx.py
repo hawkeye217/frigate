@@ -173,7 +173,7 @@ class MemryXDetector(DetectionApi):
         zip_path = os.path.join(self.cache_dir, f"{self.memx_model_type.value}.zip")
 
         try:
-            # Before downloading, check if someone else already downloaded
+            # Before downloading, check if already downloaded
             if not os.path.exists(zip_path):
                 # Download only if zip does not exist
                 urllib.request.urlretrieve(self.model_url, zip_path)
@@ -197,8 +197,8 @@ class MemryXDetector(DetectionApi):
             logger.info(f"Assigned Model Path: {self.memx_model_path}")
             logger.info(f"Assigned Post-processing Model Path: {self.memx_post_model}")
 
-            if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
-                self.load_yolo_constants()
+            if self.memx_model_type == ModelTypeEnum.yolov9:
+               self.load_yolo_constants()
 
         except Exception as e:
             logger.error(f"Failed to prepare model: {e}")
