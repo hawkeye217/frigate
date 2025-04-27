@@ -355,9 +355,10 @@ class TrackedObject:
 
         self.obj_data.update(obj_data)
         self.current_zones = current_zones
-        logger.debug(
-            f"thumb update? {thumb_update}, significant change? {significant_change}, path update? {path_update}, autotracker update? {autotracker_update}"
-        )
+        if self.camera_config.name in ["LPR-1", "LPR-2", "lpr-night"]:
+            logger.debug(
+                f"thumb update? {thumb_update}, significant change? {significant_change}, path update? {path_update}, autotracker update? {autotracker_update}"
+            )
         return (thumb_update, significant_change, path_update, autotracker_update)
 
     def to_dict(self):

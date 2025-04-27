@@ -264,9 +264,7 @@ class EmbeddingMaintainer(threading.Thread):
 
         for processor in self.realtime_processors:
             if isinstance(processor, LicensePlateRealTimeProcessor):
-                print(f"LPR: Processing frame {data['frame_time']}")
                 processor.process_frame(data, yuv_frame)
-                print(f"LPR: Done processing frame {data['frame_time']}")
             else:
                 processor.process_frame(data, yuv_frame)
 

@@ -258,7 +258,7 @@ class CameraState:
             current_ids or previous_ids or removed_ids or new_ids or updated_ids
         ) and self.name in ["LPR-1", "LPR-2", "lpr-night"]:
             logger.debug(
-                f"current_ids: {current_ids}, previous_ids: {previous_ids}, removed_ids: {removed_ids}, new_ids: {new_ids}, updated_ids: {updated_ids}"
+                f"frame_time: {frame_time}, current_ids: {current_ids}, previous_ids: {previous_ids}, removed_ids: {removed_ids}, new_ids: {new_ids}, updated_ids: {updated_ids}"
             )
 
         for id in new_ids:
@@ -287,6 +287,10 @@ class CameraState:
                 "recognized_license_plate": None,
                 "recognized_license_plate_score": None,
             }
+            if self.name in ["LPR-1", "LPR-2", "lpr-night"]:
+                logger.debug(
+                    f"new ID, frame_time: {frame_time}, box: {new_obj.obj_data['box']}"
+                )
             new_obj.thumbnail_data = thumbnail_data
             tracked_objects[id].thumbnail_data = thumbnail_data
             self.best_objects[new_obj.obj_data["label"]] = new_obj
