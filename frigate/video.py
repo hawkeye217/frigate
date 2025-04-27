@@ -943,6 +943,7 @@ def process_frames(
             )
         # add to the queue if not full
         if detected_objects_queue.full():
+            logger.debug(f"detected objects queue full, closing {frame_name}")
             frame_manager.close(frame_name)
             continue
         else:
