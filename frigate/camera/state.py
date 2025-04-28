@@ -292,7 +292,7 @@ class CameraState:
                     f"new ID, frame_time: {frame_time}, box: {new_obj.obj_data['box']}"
                 )
             new_obj.thumbnail_data = thumbnail_data.copy()
-            tracked_objects[id].thumbnail_data = thumbnail_data.copy()
+            # tracked_objects[id].thumbnail_data = thumbnail_data.copy()
             self.best_objects[new_obj.obj_data["label"]] = new_obj
 
             # call event handlers
