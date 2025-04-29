@@ -124,7 +124,7 @@ class MemryXDetector(DetectionApi):
             # Load MemryX Model with a unique device target
             self.accl = AsyncAccl(
                 self.memx_model_path,
-                mxserver_addr="host.docker.internal",
+                mxserver_addr="gateway.docker.internal",
                 group_id=device_id,  # AsyncAccl device id
             )
             
