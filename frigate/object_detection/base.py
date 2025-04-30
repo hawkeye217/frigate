@@ -82,14 +82,7 @@ class LocalObjectDetector(ObjectDetector):
         return self.detect_api.detect_raw(tensor_input=tensor_input)
 
 
-def run_detector(
-    name: str,
-    detection_queue: mp.Queue,
-    out_events: dict[str, mp.Event],
-    avg_speed,
-    start,
-    detector_config,
-):
+def prepare_detector(name, detector_config, out_events):
     threading.current_thread().name = f"detector:{name}"
     logger = logging.getLogger(f"detector.{name}")
     logger.info(f"Starting detection process: {os.getpid()}")
@@ -112,6 +105,22 @@ def run_detector(
         out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
         out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
         outputs[name] = {"shm": out_shm, "np": out_np}
+
+    return stop_event, frame_manager, object_detector, outputs, logger
+
+
+def run_detector(
+    name: str,
+    detection_queue: mp.Queue,
+    out_events: dict[str, mp.Event],
+    avg_speed,
+    start,
+    detector_config,
+):
+    
+    stop_event, frame_manager, object_detector, outputs, logger = prepare_detector(
+        name, detector_config, out_events
+    )
 
     while not stop_event.is_set():
         try:
@@ -149,30 +158,10 @@ def async_run_detector(
     start,
     detector_config,
 ):
-    # Set thread and process titles for logging and debugging
-    threading.current_thread().name = f"detector:{name}"
-    logger.info(f"Starting detection process: {os.getpid()}")
-    setproctitle(f"frigate.detector.{name}")
 
-    stop_event = mp.Event()  # Used to gracefully stop threads on signal
-
-    def receiveSignal(signalNumber, frame):
-        stop_event.set()
-
-    # Register signal handlers for graceful shutdown
-    signal.signal(signal.SIGTERM, receiveSignal)
-    signal.signal(signal.SIGINT, receiveSignal)
-
-    # Initialize shared memory and detector
-    frame_manager = SharedMemoryFrameManager()
-    object_detector = LocalObjectDetector(detector_config=detector_config)
-
-    # Create shared memory buffers for detector outputs
-    outputs = {}
-    for name in out_events.keys():
-        out_shm = UntrackedSharedMemory(name=f"out-{name}", create=False)
-        out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
-        outputs[name] = {"shm": out_shm, "np": out_np}
+    stop_event, frame_manager, object_detector, outputs, logger = prepare_detector(
+        name, detector_config, out_events
+    )
 
     def detect_worker():
         # Continuously fetch frames and send them to the async detector
