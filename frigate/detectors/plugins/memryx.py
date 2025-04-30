@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import Literal
 from frigate.detectors.detection_api import DetectionApi
 from frigate.detectors.detector_config import BaseDetectorConfig, ModelTypeEnum
-from frigate.util.model import post_process_yolov9
+from frigate.util.model import __post_process_multipart_yolo
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class MemryXDetector(DetectionApi):
     supported_models = [
         ModelTypeEnum.ssd,
         ModelTypeEnum.yolonas,
-        ModelTypeEnum.yologeneric,
+        ModelTypeEnum.yologeneric,  # Treated as yolov9 in MemryX implementation
         ModelTypeEnum.yolox,
     ]
 
@@ -66,13 +66,9 @@ class MemryXDetector(DetectionApi):
         self.memx_model_width = detector_config.model.width
         self.memx_model_type = detector_config.model.model_type
 
-        # If it's yologeneric, treat it as yolov9
-        if self.memx_model_type == ModelTypeEnum.yologeneric:
-            self.memx_model_type = ModelTypeEnum.yolov9
-
         self.cache_dir = "/memryx_models"
 
-        if self.memx_model_type == ModelTypeEnum.yolov9:
+        if self.memx_model_type == ModelTypeEnum.yologeneric:
             self.model_url = (
                 "https://developer.memryx.com/example_files/1p2_frigate/yolov9.zip"
             )
@@ -197,7 +193,7 @@ class MemryXDetector(DetectionApi):
             logger.info(f"Assigned Model Path: {self.memx_model_path}")
             logger.info(f"Assigned Post-processing Model Path: {self.memx_post_model}")
 
-            if self.memx_model_type == ModelTypeEnum.yolov9:
+            if self.memx_model_type == ModelTypeEnum.yologeneric:
                self.load_yolo_constants()
 
         except Exception as e:
@@ -507,7 +503,7 @@ class MemryXDetector(DetectionApi):
 
     def process_output(self, *outputs):
         """Output callback function -- receives frames from the MX3 and triggers post-processing"""
-        if self.memx_model_type in [ModelTypeEnum.yolov8, ModelTypeEnum.yolov9]:
+        if self.memx_model_type == ModelTypeEnum.yologeneric:
             outputs = [
                 np.expand_dims(tensor, axis=0) for tensor in outputs
             ]  # Shape: (1, H, W, C)
@@ -600,7 +596,7 @@ class MemryXDetector(DetectionApi):
             sigmoid_output = self.sigmoid(split_1)
             outputs = self.onnx_concat([mul_output, sigmoid_output], axis=1)
 
-            final_detections = post_process_yolov9(
+            final_detections = __post_process_multipart_yolo(
                 outputs, self.memx_model_width, self.memx_model_height
             )
             self.output_queue.put(final_detections)
