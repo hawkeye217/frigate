@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 from typing_extensions import Literal
 from frigate.detectors.detection_api import DetectionApi
 from frigate.detectors.detector_config import BaseDetectorConfig, ModelTypeEnum
-from frigate.util.model import __post_process_multipart_yolo
+from frigate.util.model import post_process_yolo
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class MemryXDetector(DetectionApi):
 
         if self.memx_model_type == ModelTypeEnum.yologeneric:
             self.model_url = (
-                "https://developer.memryx.com/example_files/1p2_frigate/yolov9.zip"
+                "https://developer.memryx.com/example_files/1p2_frigate/yolo-generic.zip"
             )
             self.expected_dfp_model = (
                 "YOLO_v9_small_640_640_3_onnx.dfp"
@@ -214,6 +214,7 @@ class MemryXDetector(DetectionApi):
         if self.memx_model_type == ModelTypeEnum.yolox:
             tensor_input = tensor_input.squeeze(0)
 
+            tensor_input = tensor_input * 255.0
             padded_img = np.ones((640, 640, 3), dtype=np.uint8) * 114
 
             scale = min(
@@ -238,10 +239,11 @@ class MemryXDetector(DetectionApi):
             # Step 5: Concatenate along the channel dimension (axis 2)
             concatenated_img = np.concatenate([x0, x1, x2, x3], axis=2)
             processed_input = concatenated_img.astype(np.float32)
-        else:
-            processed_input = tensor_input.astype(np.float32) / 255.0  # Normalize
-            # Assuming original input is always NHWC and MemryX wants HWNC:
-            processed_input = processed_input.transpose(1, 2, 0, 3)  # NHWC -> HWNC
+            
+        else: 
+            tensor_input = tensor_input.squeeze(0)  # (H, W, C)
+            # Add axis=2 to create Z=1: (H, W, Z=1, C)
+            processed_input = np.expand_dims(tensor_input, axis=2)  # Now (H, W, 1, 3)
 
         # Send frame to MemryX for processing
         self.capture_queue.put(processed_input)
@@ -596,7 +598,7 @@ class MemryXDetector(DetectionApi):
             sigmoid_output = self.sigmoid(split_1)
             outputs = self.onnx_concat([mul_output, sigmoid_output], axis=1)
 
-            final_detections = __post_process_multipart_yolo(
+            final_detections = post_process_yolo(
                 outputs, self.memx_model_width, self.memx_model_height
             )
             self.output_queue.put(final_detections)

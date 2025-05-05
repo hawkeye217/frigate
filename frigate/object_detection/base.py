@@ -7,6 +7,8 @@ import queue
 import signal
 import threading
 from abc import ABC, abstractmethod
+from multiprocessing import Queue, Value
+from multiprocessing.synchronize import Event as MpEvent
 
 import numpy as np
 from setproctitle import setproctitle
@@ -16,6 +18,7 @@ from frigate.detectors import create_detector
 from frigate.detectors.detector_config import (
     BaseDetectorConfig,
     InputDTypeEnum,
+    ModelConfig,
 )
 from frigate.util.builtin import EventsPerSecond, load_labels
 from frigate.util.image import SharedMemoryFrameManager, UntrackedSharedMemory
@@ -32,7 +35,7 @@ class ObjectDetector(ABC):
         pass
 
 
-class LocalObjectDetector(ObjectDetector):
+class BaseLocalDetector(ObjectDetector):
     def __init__(
         self,
         detector_config: BaseDetectorConfig = None,
@@ -54,6 +57,18 @@ class LocalObjectDetector(ObjectDetector):
 
         self.detect_api = create_detector(detector_config)
 
+    def _transform_input(self, tensor_input: np.ndarray) -> np.ndarray:
+        if self.input_transform:
+            tensor_input = np.transpose(tensor_input, self.input_transform)
+
+        if self.dtype == InputDTypeEnum.float:
+            tensor_input = tensor_input.astype(np.float32)
+            tensor_input /= 255
+        elif self.dtype == InputDTypeEnum.float_denorm:
+            tensor_input = tensor_input.astype(np.float32)
+
+        return tensor_input
+
     def detect(self, tensor_input: np.ndarray, threshold=0.4):
         detections = []
 
@@ -71,25 +86,30 @@ class LocalObjectDetector(ObjectDetector):
         self.fps.update()
         return detections
 
+
+class LocalObjectDetector(BaseLocalDetector):
     def detect_raw(self, tensor_input: np.ndarray):
-        if self.input_transform:
-            tensor_input = np.transpose(tensor_input, self.input_transform)
-
-        if self.dtype == InputDTypeEnum.float:
-            tensor_input = tensor_input.astype(np.float32)
-            tensor_input /= 255
-
+        tensor_input = self._transform_input(tensor_input)
         return self.detect_api.detect_raw(tensor_input=tensor_input)
 
 
-def prepare_detector(name, detector_config, out_events):
+class AsyncLocalObjectDetector(BaseLocalDetector):
+    def async_send_input(self, tensor_input: np.ndarray, connection_id):
+        tensor_input = self._transform_input(tensor_input)
+        return self.detect_api.send_input(connection_id, tensor_input)
+    
+    def async_receive_output(self):
+        return self.detect_api.receive_output()
+
+
+def prepare_detector(name, out_events):
     threading.current_thread().name = f"detector:{name}"
     logger = logging.getLogger(f"detector.{name}")
     logger.info(f"Starting detection process: {os.getpid()}")
     setproctitle(f"frigate.detector.{name}")
     listen()
 
-    stop_event = mp.Event()
+    stop_event: MpEvent = mp.Event()
 
     def receiveSignal(signalNumber, frame):
         stop_event.set()
@@ -98,7 +118,6 @@ def prepare_detector(name, detector_config, out_events):
     signal.signal(signal.SIGINT, receiveSignal)
 
     frame_manager = SharedMemoryFrameManager()
-    object_detector = LocalObjectDetector(detector_config=detector_config)
 
     outputs = {}
     for name in out_events.keys():
@@ -106,21 +125,23 @@ def prepare_detector(name, detector_config, out_events):
         out_np = np.ndarray((20, 6), dtype=np.float32, buffer=out_shm.buf)
         outputs[name] = {"shm": out_shm, "np": out_np}
 
-    return stop_event, frame_manager, object_detector, outputs, logger
+    return stop_event, frame_manager, outputs, logger
 
 
 def run_detector(
     name: str,
-    detection_queue: mp.Queue,
-    out_events: dict[str, mp.Event],
-    avg_speed,
-    start,
-    detector_config,
+    detection_queue: Queue,
+    out_events: dict[str, MpEvent],
+    avg_speed: Value,
+    start: Value,
+    detector_config: BaseDetectorConfig,
 ):
     
-    stop_event, frame_manager, object_detector, outputs, logger = prepare_detector(
-        name, detector_config, out_events
+    stop_event, frame_manager, outputs, logger = prepare_detector(
+        name, out_events
     )
+
+    object_detector = LocalObjectDetector(detector_config=detector_config)
 
     while not stop_event.is_set():
         try:
@@ -152,16 +173,18 @@ def run_detector(
 
 def async_run_detector(
     name: str,
-    detection_queue: mp.Queue,
-    out_events: dict[str, mp.Event],
-    avg_speed,
-    start,
-    detector_config,
+    detection_queue: Queue,
+    out_events: dict[str, MpEvent],
+    avg_speed: Value,
+    start: Value,
+    detector_config: BaseDetectorConfig,
 ):
 
-    stop_event, frame_manager, object_detector, outputs, logger = prepare_detector(
-        name, detector_config, out_events
+    stop_event, frame_manager, outputs, logger = prepare_detector(
+        name, out_events
     )
+
+    object_detector = AsyncLocalObjectDetector(detector_config=detector_config)
 
     def detect_worker():
         # Continuously fetch frames and send them to the async detector
@@ -184,13 +207,13 @@ def async_run_detector(
 
             # send input to Accelator
             start.value = datetime.datetime.now().timestamp()
-            object_detector.detect_api.send_input(connection_id, input_frame)
+            object_detector.async_send_input(input_frame, connection_id)
 
     def result_worker():
         # Continuously receive detection results from the async detector
         logger.info("Starting Result Worker Thread")
         while not stop_event.is_set():
-            connection_id, detections = object_detector.detect_api.receive_output()
+            connection_id, detections = object_detector.async_receive_output()
             duration = datetime.datetime.now().timestamp() - start.value
 
             frame_manager.close(connection_id)
@@ -222,17 +245,17 @@ def async_run_detector(
 class ObjectDetectProcess:
     def __init__(
         self,
-        name,
-        detection_queue,
-        out_events,
-        detector_config,
+        name: str,
+        detection_queue: Queue,
+        out_events: dict[str, MpEvent],
+        detector_config: BaseDetectorConfig,
     ):
         self.name = name
         self.out_events = out_events
         self.detection_queue = detection_queue
-        self.avg_inference_speed = mp.Value("d", 0.01)
-        self.detection_start = mp.Value("d", 0.0)
-        self.detect_process = None
+        self.avg_inference_speed = Value("d", 0.01)
+        self.detection_start = Value("d", 0.0)
+        self.detect_process: util.Process | None = None
         self.detector_config = detector_config
         self.start_or_restart()
 
@@ -285,7 +308,15 @@ class ObjectDetectProcess:
 
 
 class RemoteObjectDetector:
-    def __init__(self, name, labels, detection_queue, event, model_config, stop_event):
+    def __init__(
+        self,
+        name: str,
+        labels: dict[int, str],
+        detection_queue: Queue,
+        event: MpEvent,
+        model_config: ModelConfig,
+        stop_event: MpEvent,
+    ):
         self.labels = labels
         self.name = name
         self.fps = EventsPerSecond()
