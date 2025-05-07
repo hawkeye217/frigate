@@ -25,6 +25,10 @@ logger = logging.getLogger(__name__)
 
 DETECTOR_KEY = "memryx"
 
+# Check if custom environment variable is set for mxa_manager IP otherwise
+# fall back to 'gateway.docker.internal'
+mxserver_addr = os.getenv('MXA_MANAGER_ADDRESS', 'gateway.docker.internal')
+
 # Configuration class for model settings
 class ModelConfig(BaseModel):
     path: str = Field(default=None, title="Model Path")  # Path to the DFP file
@@ -120,7 +124,7 @@ class MemryXDetector(DetectionApi):
             # Load MemryX Model with a unique device target
             self.accl = AsyncAccl(
                 self.memx_model_path,
-                mxserver_addr="gateway.docker.internal",
+                mxserver_addr=mxserver_addr,
                 group_id=device_id,  # AsyncAccl device id
             )
             
