@@ -352,7 +352,7 @@ model:
   height: 320  # (Can be set to 640 for higher resolution)
   input_tensor: hwnc
   input_dtype: float
-  # path: YOLO_v9_small_320_320_3_onnx.dfp  ##Model is normally fetched through the runtime, so 'path' can be omitted.##
+  # path: YOLO_v9_small_onnx.dfp  ##Model is normally fetched through the runtime, so 'path' can be omitted.##
   labelmap_path: /labelmap/coco-80.txt
 ```
 
