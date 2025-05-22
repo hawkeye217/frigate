@@ -165,9 +165,16 @@ devices:
   - /dev/memx0
 ```
 
-During the configuration process, you should run Docker in privileged mode.
+During configuration, you must run Docker in privileged mode and ensure the container can access the host network gateway.
 
-In `docker-compose.yml`, add:  `privileged: true`
+In your `docker-compose.yml`, also add:
+
+```yaml
+privileged: true
+
+extra_hosts:
+  - "gateway.docker.internal:host-gateway"
+```
 
 If you can't use Docker Compose, you can run the container with something similar to this:
 
