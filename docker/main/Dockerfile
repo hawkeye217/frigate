@@ -177,7 +177,13 @@ RUN wget -q https://bootstrap.pypa.io/get-pip.py -O get-pip.py \
     && python3 get-pip.py "pip"
 
 # Build MemryX SDK wheel
-RUN pip3 wheel --wheel-dir=/wheels/memx/ --extra-index-url https://developer.memryx.com/pip memryx~=1.2.0
+RUN pip3 wheel --wheel-dir=/wheels/memx/ \
+     --index-url https://download.pytorch.org/whl/cpu \
+     --extra-index-url https://developer.memryx.com/pip \
+     --extra-index-url https://pypi.org/simple \
+    memryx~=1.2.0
+
+RUN rm -f /wheels/memx/PySide6* /wheels/memx/Qt* /wheels/memx/qt_material*
 
 COPY docker/main/requirements.txt /requirements.txt
 RUN pip3 install -r /requirements.txt
