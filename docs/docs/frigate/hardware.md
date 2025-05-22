@@ -187,7 +187,7 @@ Due to the MX3's architecture, the maximum frames per second supported cannot be
 | YOLOX-Small          | 640        | ~ 16 ms            | ~ 263         |
 | SSDlite MobileNet v2 | 320        | ~ 5 ms             | ~ 1056        |
     
-Inference speeds may vary depending on the host platform’s CPU performance. The above data was measured on an **Intel 13700 CPU**. Platforms like Raspberry Pi, x86 hosts, Orange Pi, and other ARM-based SBCs have different levels of processing capability, which will post-processing time and may result in lower FPS.
+Inference speeds may vary depending on the host platform’s CPU performance. The above data was measured on an **Intel 13700 CPU**. Platforms like Raspberry Pi, x86 hosts, Orange Pi, and other ARM-based SBCs have different levels of processing capability, which will increase post-processing time and may result in lower FPS.
 
 
 ### Rockchip platform
