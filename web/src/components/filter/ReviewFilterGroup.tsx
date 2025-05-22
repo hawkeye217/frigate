@@ -354,7 +354,7 @@ function GeneralFilterButton({
       variant={
         selectedLabels?.length || selectedZones?.length ? "select" : "default"
       }
-      className="flex items-center gap-2 capitalize"
+      className="flex items-center gap-2 smart-capitalize"
       aria-label={t("filter")}
     >
       <FaFilter
@@ -498,7 +498,7 @@ export function GeneralFilterContent({
           {allLabels.map((item) => (
             <FilterSwitch
               key={item}
-              label={item.replaceAll("_", " ")}
+              label={t(item, { ns: "objects" })}
               isChecked={filter.labels?.includes(item) ?? false}
               onCheckedChange={(isChecked) => {
                 if (isChecked) {

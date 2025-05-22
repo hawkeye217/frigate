@@ -83,7 +83,7 @@ export default function CameraInfoDialog({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="capitalize">
+            <DialogTitle className="smart-capitalize">
               {t("cameras.info.cameraProbeInfo", {
                 camera: camera.name.replaceAll("_", " "),
               })}
@@ -132,14 +132,14 @@ export default function CameraInfoDialog({
                                           /
                                           {codec.height /
                                             gcd(codec.width, codec.height)}{" "}
-                                          aspect ratio)
+                                          {t("cameras.info.aspectRatio")})
                                         </span>
                                       </>
                                     ) : (
                                       <span>
                                         {t("cameras.info.resolution")}{" "}
                                         <span className="text-primary">
-                                          Unknown
+                                          t("cameras.info.unknown")
                                         </span>
                                       </span>
                                     )}

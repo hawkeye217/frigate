@@ -78,16 +78,21 @@ proxy:
   # Optional: Mapping for headers from upstream proxies. Only used if Frigate's auth
   # is disabled.
   # NOTE: Many authentication proxies pass a header downstream with the authenticated
-  #       user name. Not all values are supported. It must be a whitelisted header.
+  #       user name and role. Not all values are supported. It must be a whitelisted header.
   #       See the docs for more info.
   header_map:
     user: x-forwarded-user
+    role: x-forwarded-role
   # Optional: Url for logging out a user. This sets the location of the logout url in
   # the UI.
   logout_url: /api/logout
   # Optional: Auth secret that is checked against the X-Proxy-Secret header sent from
   # the proxy. If not set, all requests are trusted regardless of origin.
   auth_secret: None
+  # Optional: The default role to use for proxy auth. Must be "admin" or "viewer"
+  default_role: viewer
+  # Optional: The character used to separate multiple values in the proxy headers. (default: shown below)
+  separator: ","
 
 # Optional: Authentication configuration
 auth:
@@ -543,9 +548,9 @@ semantic_search:
   model_size: "small"
 
 # Optional: Configuration for face recognition capability
-# NOTE: Can (enabled, min_area) be overridden at the camera level
+# NOTE: enabled, min_area can be overridden at the camera level
 face_recognition:
-  # Optional: Enable semantic search (default: shown below)
+  # Optional: Enable face recognition (default: shown below)
   enabled: False
   # Optional: Minimum face distance score required to mark as a potential match (default: shown below)
   unknown_score: 0.8
@@ -556,16 +561,24 @@ face_recognition:
   recognition_threshold: 0.9
   # Optional: Min area of detected face box to consider running face recognition (default: shown below)
   min_area: 500
+  # Optional: Min face attempts for the sub label to be applied to the person object (default: shown below)
+  min_faces: 1
   # Optional: Number of images of recognized faces to save for training (default: shown below)
   save_attempts: 100
   # Optional: Apply a blur quality filter to adjust confidence based on the blur level of the image (default: shown below)
   blur_confidence_filter: True
+  # Optional: Set the model size used face recognition. (default: shown below)
+  model_size: small
 
 # Optional: Configuration for license plate recognition capability
 # NOTE: enabled, min_area, and enhancement can be overridden at the camera level
 lpr:
   # Optional: Enable license plate recognition (default: shown below)
   enabled: False
+  # Optional: The device to run the models on (default: shown below)
+  device: CPU
+  # Optional: Set the model size used for text detection. (default: shown below)
+  model_size: small
   # Optional: License plate object confidence score required to begin running recognition (default: shown below)
   detection_threshold: 0.7
   # Optional: Minimum area of license plate to begin running recognition (default: shown below)

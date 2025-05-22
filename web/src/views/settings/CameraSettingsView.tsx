@@ -230,7 +230,9 @@ export default function CameraSettingsView({
     if (changedValue) {
       addMessage(
         "camera_settings",
-        `Unsaved review classification settings for ${capitalizeFirstLetter(selectedCamera)}`,
+        t("camera.reviewClassification.unsavedChanges", {
+          camera: selectedCamera,
+        }),
         undefined,
         `review_classification_settings_${selectedCamera}`,
       );
@@ -251,8 +253,8 @@ export default function CameraSettingsView({
   }
 
   useEffect(() => {
-    document.title = "Camera Settings - Frigate";
-  }, []);
+    document.title = t("documentTitle.camera");
+  }, [t]);
 
   if (!cameraConfig && !selectedCamera) {
     return <ActivityIndicator />;
@@ -431,7 +433,7 @@ export default function CameraSettingsView({
                                           }}
                                         />
                                       </FormControl>
-                                      <FormLabel className="font-normal capitalize">
+                                      <FormLabel className="font-normal smart-capitalize">
                                         {zone.name.replaceAll("_", " ")}
                                       </FormLabel>
                                     </FormItem>
@@ -536,7 +538,7 @@ export default function CameraSettingsView({
                                             }}
                                           />
                                         </FormControl>
-                                        <FormLabel className="font-normal capitalize">
+                                        <FormLabel className="font-normal smart-capitalize">
                                           {zone.name.replaceAll("_", " ")}
                                         </FormLabel>
                                       </FormItem>

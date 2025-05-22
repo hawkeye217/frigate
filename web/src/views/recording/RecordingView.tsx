@@ -50,6 +50,11 @@ import { useFullscreen } from "@/hooks/use-fullscreen";
 import { useTimezone } from "@/hooks/use-date-utils";
 import { useTimelineZoom } from "@/hooks/use-timeline-zoom";
 import { useTranslation } from "react-i18next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type RecordingViewProps = {
   startCamera: string;
@@ -385,6 +390,55 @@ export function RecordingView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previewRowRef.current?.scrollWidth, previewRowRef.current?.scrollHeight]);
 
+  // visibility listener for lazy loading
+
+  const [visiblePreviews, setVisiblePreviews] = useState<string[]>([]);
+  const visiblePreviewObserver = useRef<IntersectionObserver | null>(null);
+  useEffect(() => {
+    const visibleCameras = new Set<string>();
+    visiblePreviewObserver.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const camera = (entry.target as HTMLElement).dataset.camera;
+
+          if (!camera) {
+            return;
+          }
+
+          if (entry.isIntersecting) {
+            visibleCameras.add(camera);
+          } else {
+            visibleCameras.delete(camera);
+          }
+
+          setVisiblePreviews([...visibleCameras]);
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    return () => {
+      visiblePreviewObserver.current?.disconnect();
+    };
+  }, []);
+
+  const previewRef = useCallback(
+    (node: HTMLElement | null) => {
+      if (!visiblePreviewObserver.current) {
+        return;
+      }
+
+      try {
+        if (node) visiblePreviewObserver.current.observe(node);
+      } catch (e) {
+        // no op
+      }
+    },
+    // we need to listen on the value of the ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visiblePreviewObserver.current],
+  );
+
   return (
     <div ref={contentRef} className="flex size-full flex-col pt-2">
       <Toaster closeButton={true} />
@@ -621,29 +675,37 @@ export function RecordingView({
                   }
 
                   return (
-                    <div
-                      key={cam}
-                      className={
-                        mainCameraAspect == "tall" ? "w-full" : "h-full"
-                      }
-                      style={{
-                        aspectRatio: getCameraAspect(cam),
-                      }}
-                    >
-                      <PreviewPlayer
-                        className="size-full"
-                        camera={cam}
-                        timeRange={currentTimeRange}
-                        cameraPreviews={allPreviews ?? []}
-                        startTime={startTime}
-                        isScrubbing={scrubbing}
-                        onControllerReady={(controller) => {
-                          previewRefs.current[cam] = controller;
-                          controller.scrubToTimestamp(startTime);
-                        }}
-                        onClick={() => onSelectCamera(cam)}
-                      />
-                    </div>
+                    <Tooltip key={cam}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={
+                            mainCameraAspect == "tall" ? "w-full" : "h-full"
+                          }
+                          style={{
+                            aspectRatio: getCameraAspect(cam),
+                          }}
+                        >
+                          <PreviewPlayer
+                            previewRef={previewRef}
+                            className="size-full"
+                            camera={cam}
+                            timeRange={currentTimeRange}
+                            cameraPreviews={allPreviews ?? []}
+                            startTime={startTime}
+                            isScrubbing={scrubbing}
+                            isVisible={visiblePreviews.includes(cam)}
+                            onControllerReady={(controller) => {
+                              previewRefs.current[cam] = controller;
+                              controller.scrubToTimestamp(startTime);
+                            }}
+                            onClick={() => onSelectCamera(cam)}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="smart-capitalize">
+                        {cam.replaceAll("_", " ")}
+                      </TooltipContent>
+                    </Tooltip>
                   );
                 })}
                 <div className="w-2" />
@@ -768,7 +830,7 @@ function Timeline({
       className={`${
         isDesktop
           ? `${timelineType == "timeline" ? "w-[100px]" : "w-60"} no-scrollbar overflow-y-auto`
-          : "overflow-hidden portrait:flex-grow landscape:w-[20%]"
+          : `overflow-hidden portrait:flex-grow ${timelineType == "timeline" ? "landscape:w-[100px]" : "landscape:w-[175px]"} `
       } relative`}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[30px] w-full bg-gradient-to-b from-secondary to-transparent"></div>
@@ -804,7 +866,7 @@ function Timeline({
           <div
             className={cn(
               "scrollbar-container grid h-auto grid-cols-1 gap-4 overflow-auto p-4",
-              isMobile && "sm:grid-cols-2",
+              isMobile && "sm:portrait:grid-cols-2",
             )}
           >
             {mainCameraReviewItems.length === 0 ? (

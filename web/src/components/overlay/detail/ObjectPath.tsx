@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tooltip";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
 import { getLifecycleItemDescription } from "@/utils/lifecycleUtil";
+import { useTranslation } from "react-i18next";
 
 type ObjectPathProps = {
   positions?: Position[];
@@ -40,6 +41,7 @@ export function ObjectPath({
   onPointClick,
   visible = true,
 }: ObjectPathProps) {
+  const { t } = useTranslation(["views/explore"]);
   const getAbsolutePositions = useCallback(() => {
     if (!imgRef.current || !positions) return [];
     const imgRect = imgRef.current.getBoundingClientRect();
@@ -100,10 +102,10 @@ export function ObjectPath({
             />
           </TooltipTrigger>
           <TooltipPortal>
-            <TooltipContent side="top" className="capitalize">
+            <TooltipContent side="top" className="smart-capitalize">
               {pos.lifecycle_item
                 ? getLifecycleItemDescription(pos.lifecycle_item)
-                : "Tracked point"}
+                : t("objectLifecycle.trackedPoint")}
             </TooltipContent>
           </TooltipPortal>
         </Tooltip>

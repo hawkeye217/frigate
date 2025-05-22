@@ -6,9 +6,10 @@
     "classification": "Classification Settings - Frigate",
     "masksAndZones": "Mask and Zone Editor - Frigate",
     "motionTuner": "Motion Tuner - Frigate",
-    "object": "Object Settings - Frigate",
+    "object": "Debug - Frigate",
     "general": "General Settings - Frigate",
-    "frigatePlus": "Frigate+ Settings - Frigate"
+    "frigatePlus": "Frigate+ Settings - Frigate",
+    "notifications": "Notification Settings - Frigate"
   },
   "menu": {
     "ui": "UI",
@@ -83,6 +84,7 @@
   },
   "classification": {
     "title": "Classification Settings",
+    "unsavedChanges": "Unsaved Classification settings changes",
     "birdClassification": {
       "title": "Bird Classification",
       "desc": "Bird classification identifies known birds using a quantized Tensorflow model. When a known bird is recognized, its common name will be added as a sub_label. This information is included in the UI, filters, as well as in notifications."
@@ -136,6 +138,7 @@
       "desc": "Frigate can recognize license plates on vehicles and automatically add the detected characters to the recognized_license_plate field or a known name as a sub_label to objects that are of type car. A common use case may be to read the license plates of cars pulling into a driveway or cars passing by on a street.",
       "readTheDocumentation": "Read the Documentation"
     },
+    "restart_required": "Restart required (Classification settings changed)",
     "toast": {
       "success": "Classification settings have been saved. Restart Frigate to apply your changes.",
       "error": "Failed to save config changes: {{errorMessage}}"
@@ -166,11 +169,12 @@
         "notSelectDetections": "All {{detectionsLabels}} objects detected in {{zone}} on {{cameraName}} not categorized as Alerts will be shown as Detections regardless of which zone they are in.",
         "regardlessOfZoneObjectDetectionsTips": "All {{detectionsLabels}} objects not categorized on {{cameraName}} will be shown as Detections regardless of which zone they are in."
       },
+      "unsavedChanges": "Unsaved Review Classification settings for {{camera}}",
       "selectAlertsZones": "Select zones for Alerts",
       "selectDetectionsZones": "Select zones for Detections",
       "limitDetections": "Limit detections to specific zones",
       "toast": {
-        "success": "Review classification configuration has been saved. Restart Frigate to apply changes."
+        "success": "Review Classification configuration has been saved. Restart Frigate to apply changes."
       }
     }
   },
@@ -178,6 +182,7 @@
     "filter": {
       "all": "All Masks and Zones"
     },
+    "restart_required": "Restart required (masks/zones changed)",
     "toast": {
       "success": {
         "copyCoordinates": "Copied coordinates for {{polyName}} to clipboard."
@@ -186,6 +191,8 @@
         "copyCoordinatesFailed": "Could not copy coordinates to clipboard."
       }
     },
+    "motionMaskLabel": "Motion Mask {{number}}",
+    "objectMaskLabel": "Object Mask {{number}} ({{label}})",
     "form": {
       "zoneName": {
         "error": {
@@ -210,6 +217,11 @@
       "loiteringTime": {
         "error": {
           "mustBeGreaterOrEqualZero": "Loitering time must be greater than or equal to 0."
+        }
+      },
+      "speed": {
+        "error": {
+          "mustBeGreaterOrEqualTo": "Speed threshold must greater than or equal to 0.1."
         }
       },
       "polygonDrawing": {
@@ -245,7 +257,7 @@
       "clickDrawPolygon": "Click to draw a polygon on the image.",
       "name": {
         "title": "Name",
-        "inputPlaceHolder": "Enter a name...",
+        "inputPlaceHolder": "Enter a name…",
         "tips": "Name must be at least 2 characters and must not be the name of a camera or another zone."
       },
       "inertia": {
@@ -263,7 +275,12 @@
       "allObjects": "All Objects",
       "speedEstimation": {
         "title": "Speed Estimation",
-        "desc": "Enable speed estimation for objects in this zone. The zone must have exactly 4 points."
+        "desc": "Enable speed estimation for objects in this zone. The zone must have exactly 4 points.",
+        "docs": "Read the documentation",
+        "lineADistance": "Line A distance ({{unit}})",
+        "lineBDistance": "Line B distance ({{unit}})",
+        "lineCDistance": "Line C distance ({{unit}})",
+        "lineDDistance": "Line D distance ({{unit}})"
       },
       "speedThreshold": {
         "title": "Speed Threshold ({{unit}})",
@@ -335,6 +352,7 @@
   },
   "motionDetectionTuner": {
     "title": "Motion Detection Tuner",
+    "unsavedChanges": "Unsaved Motion Tuner changes ({{camera}})",
     "desc": {
       "title": "Frigate uses motion detection as a first line check to see if there is anything happening in the frame worth checking with object detection.",
       "documentation": "Read the Motion Tuning Guide"
@@ -385,12 +403,12 @@
     "motion": {
       "title": "Motion boxes",
       "desc": "Show boxes around areas where motion is detected",
-      "tips": "<p className=\"mb-2\"><strong>Motion Boxes</strong></p><br><p>Red boxes will be overlaid on areas of the frame where motion is currently being detected</p>"
+      "tips": "<p><strong>Motion Boxes</strong></p><br><p>Red boxes will be overlaid on areas of the frame where motion is currently being detected</p>"
     },
     "regions": {
       "title": "Regions",
       "desc": "Show a box of the region of interest sent to the object detector",
-      "tips": "<p className=\"mb-2\"><strong>Region Boxes</strong></p><br><p>Bright green boxes will be overlaid on areas of interest in the frame that are being sent to the object detector.</p>"
+      "tips": "<p><strong>Region Boxes</strong></p><br><p>Bright green boxes will be overlaid on areas of interest in the frame that are being sent to the object detector.</p>"
     },
     "objectShapeFilterDrawing": {
       "title": "Object Shape Filter Drawing",
@@ -464,27 +482,38 @@
             "placeholder": "Re-enter new password"
           }
         },
-        "usernameIsRequired": "Username is required"
+        "usernameIsRequired": "Username is required",
+        "passwordIsRequired": "Password is required"
       },
       "createUser": {
         "title": "Create New User",
         "desc": "Add a new user account and specify an role for access to areas of the Frigate UI.",
-        "usernameOnlyInclude": "Username may only include letters, numbers, . or _"
+        "usernameOnlyInclude": "Username may only include letters, numbers, . or _",
+        "confirmPassword": "Please confirm your password"
       },
       "deleteUser": {
         "title": "Delete User",
         "desc": "This action cannot be undone. This will permanently delete the user account and remove all associated data.",
-        "warn": "Are you sure you want to delete <span className=\"font-bold\">{{username}}</span>?"
+        "warn": "Are you sure you want to delete <strong>{{username}}</strong>?"
       },
       "passwordSetting": {
+        "cannotBeEmpty": "Password cannot be empty",
+        "doNotMatch": "Passwords do not match",
         "updatePassword": "Update Password for {{username}}",
         "setPassword": "Set Password",
         "desc": "Create a strong password to secure this account."
       },
       "changeRole": {
         "title": "Change User Role",
-        "desc": "Update permissions for <span className=\"font-medium\">{{username}}</span>",
-        "roleInfo": "<p>Select the appropriate role for this user:</p><ul className=\"mt-2 space-y-1 pl-5\"><li> • <span className=\"font-medium\">Admin:</span> Full access to all features. </li><li> • <span className=\"font-medium\">Viewer:</span> Limited to Live dashboards, Review, Explore, and Exports only.</li></ul>"
+        "select": "Select a role",
+        "desc": "Update permissions for <strong>{{username}}</strong>",
+        "roleInfo": {
+          "intro": "Select the appropriate role for this user:",
+          "admin": "Admin",
+          "adminDesc": "Full access to all features.",
+          "viewer": "Viewer",
+          "viewerDesc": "Limited to Live dashboards, Review, Explore, and Exports only."
+        }
       }
     }
   },
@@ -497,7 +526,7 @@
     },
     "notificationUnavailable": {
       "title": "Notifications Unavailable",
-      "desc": "Web push notifications require a secure context (<code>https://...</code>). This is a browser limitation. Access Frigate securely to use notifications.",
+      "desc": "Web push notifications require a secure context (<code>https://…</code>). This is a browser limitation. Access Frigate securely to use notifications.",
       "documentation": "Read the Documentation"
     },
     "globalSettings": {
@@ -518,9 +547,12 @@
     "registerDevice": "Register This Device",
     "unregisterDevice": "Unregister This Device",
     "sendTestNotification": "Send a test notification",
+    "unsavedRegistrations": "Unsaved Notification registrations",
+    "unsavedChanges": "Unsaved Notification changes",
     "active": "Notifications Active",
     "suspended": "Notifications suspended {{time}}",
     "suspendTime": {
+      "suspend": "Suspend",
       "5minutes": "Suspend for 5 minutes",
       "10minutes": "Suspend for 10 minutes",
       "30minutes": "Suspend for 30 minutes",
@@ -565,15 +597,20 @@
       "modelType": "Model Type",
       "trainDate": "Train Date",
       "baseModel": "Base Model",
+      "plusModelType": {
+        "baseModel": "Base Model",
+        "userModel": "Fine-Tuned"
+      },
       "supportedDetectors": "Supported Detectors",
-      "dimensions": "Dimensions",
       "cameras": "Cameras",
-      "loading": "Loading model information...",
+      "loading": "Loading model information…",
       "error": "Failed to load model information",
       "availableModels": "Available Models",
-      "loadingAvailableModels": "Loading available models...",
+      "loadingAvailableModels": "Loading available models…",
       "modelSelect": "Your available models on Frigate+ can be selected here. Note that only models compatible with your current detector configuration can be selected."
     },
+    "unsavedChanges": "Unsaved Frigate+ settings changes",
+    "restart_required": "Restart required (Frigate+ model changed)",
     "toast": {
       "success": "Frigate+ settings have been saved. Restart Frigate to apply changes.",
       "error": "Failed to save config changes: {{errorMessage}}"

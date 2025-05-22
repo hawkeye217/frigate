@@ -13,6 +13,7 @@ import { VideoResolutionType } from "@/types/live";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import { calculateInpointOffset } from "@/utils/videoUtil";
 
 /**
  * Dynamically switches between video playback and scrubbing preview player.
@@ -197,6 +198,11 @@ export default function DynamicVideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [controller, recordings]);
 
+  const inpointOffset = useMemo(
+    () => calculateInpointOffset(recordingParams.after, (recordings || [])[0]),
+    [recordingParams, recordings],
+  );
+
   return (
     <>
       <HlsVideoPlayer
@@ -207,6 +213,7 @@ export default function DynamicVideoPlayer({
         hotKeys={hotKeys}
         supportsFullscreen={supportsFullscreen}
         fullscreen={fullscreen}
+        inpointOffset={inpointOffset}
         onTimeUpdate={onTimeUpdate}
         onPlayerLoaded={onPlayerLoaded}
         onClipEnded={onClipEnded}

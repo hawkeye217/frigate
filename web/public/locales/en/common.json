@@ -41,27 +41,47 @@
     "second_one": "{{time}} second",
     "second_other": "{{time}} seconds",
     "formattedTimestamp": {
-      "12hour": "%b %-d, %I:%M:%S %p",
-      "24hour": "%b %-d, %H:%M:%S"
+      "12hour": "MMM d, h:mm:ss aaa",
+      "24hour": "MMM d, HH:mm:ss"
     },
     "formattedTimestamp2": {
-      "12hour": "%m/%d %I:%M:%S%P",
-      "24hour": "%d %b %H:%M:%S"
+      "12hour": "MM/dd h:mm:ssa",
+      "24hour": "d MMM HH:mm:ss"
     },
-    "formattedTimestampExcludeSeconds": {
-      "12hour": "%b %-d, %I:%M %p",
-      "24hour": "%b %-d, %H:%M"
+    "formattedTimestampHourMinute": {
+      "12hour": "h:mm aaa",
+      "24hour": "HH:mm"
     },
-    "formattedTimestampWithYear": {
-      "12hour": "%b %-d %Y, %I:%M %p",
-      "24hour": "%b %-d %Y, %H:%M"
+    "formattedTimestampHourMinuteSecond": {
+      "12hour": "h:mm:ss aaa",
+      "24hour": "HH:mm:ss"
     },
-    "formattedTimestampOnlyMonthAndDay": "%b %-d"
+    "formattedTimestampMonthDayHourMinute": {
+      "12hour": "MMM d, h:mm aaa",
+      "24hour": "MMM d, HH:mm"
+    },
+    "formattedTimestampMonthDayYear": {
+      "12hour": "MMM d, yyyy",
+      "24hour": "MMM d, yyyy"
+    },
+    "formattedTimestampMonthDayYearHourMinute": {
+      "12hour": "MMM d yyyy, h:mm aaa",
+      "24hour": "MMM d yyyy, HH:mm"
+    },
+    "formattedTimestampMonthDay": "MMM d",
+    "formattedTimestampFilename": {
+      "12hour": "MM-dd-yy-h-mm-ss-a",
+      "24hour": "MM-dd-yy-HH-mm-ss"
+    }
   },
   "unit": {
     "speed": {
       "mph": "mph",
       "kph": "kph"
+    },
+    "length": {
+      "feet": "feet",
+      "meters": "meters"
     }
   },
   "label": {
@@ -76,7 +96,7 @@
     "disabled": "Disabled",
     "disable": "Disable",
     "save": "Save",
-    "saving": "Saving...",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "close": "Close",
     "copy": "Copy",
@@ -141,6 +161,8 @@
       "fi": "Suomi (Finnish)",
       "da": "Dansk (Danish)",
       "sk": "Slovenčina (Slovak)",
+      "yue": "粵語 (Cantonese)",
+      "th": "ไทย (Thai)",
       "withSystem": {
         "label": "Use the system settings for language"
       }
@@ -161,7 +183,7 @@
       "green": "Green",
       "nord": "Nord",
       "red": "Red",
-      "contrast": "High Contrast",
+      "highcontrast": "High Contrast",
       "default": "Default"
     },
     "help": "Help",

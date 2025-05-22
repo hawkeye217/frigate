@@ -73,7 +73,7 @@ import { LuInfo, LuSearch } from "react-icons/lu";
 import { TooltipPortal } from "@radix-ui/react-tooltip";
 import { FaPencilAlt } from "react-icons/fa";
 import TextEntryDialog from "@/components/overlay/dialog/TextEntryDialog";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TbFaceId } from "react-icons/tb";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import FaceSelectionDialog from "../FaceSelectionDialog";
@@ -187,7 +187,11 @@ export default function SearchDetailDialog({
   const Description = isDesktop ? DialogDescription : MobilePageDescription;
 
   return (
-    <Overlay open={isOpen} onOpenChange={handleOpenChange}>
+    <Overlay
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      enableHistoryBack={true}
+    >
       <Content
         className={cn(
           "scrollbar-container overflow-y-auto",
@@ -231,7 +235,7 @@ export default function SearchDetailDialog({
                   {item == "object_lifecycle" && (
                     <FaRotate className="size-4" />
                   )}
-                  <div className="capitalize">{t(`type.${item}`)}</div>
+                  <div className="smart-capitalize">{t(`type.${item}`)}</div>
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
@@ -320,8 +324,12 @@ function ObjectDetailsTab({
   const formattedDate = useFormattedTimestamp(
     search?.start_time ?? 0,
     config?.ui.time_format == "24hour"
-      ? t("time.formattedTimestampWithYear.24hour", { ns: "common" })
-      : t("time.formattedTimestampWithYear.12hour", { ns: "common" }),
+      ? t("time.formattedTimestampMonthDayYearHourMinute.24hour", {
+          ns: "common",
+        })
+      : t("time.formattedTimestampMonthDayYearHourMinute.12hour", {
+          ns: "common",
+        }),
     config?.ui.timezone,
   );
 
@@ -366,7 +374,7 @@ function ObjectDetailsTab({
 
   const snapScore = useMemo(() => {
     if (!search?.has_snapshot) {
-      return 0;
+      return undefined;
     }
 
     const value = search.data.score ?? search.score ?? 0;
@@ -707,9 +715,11 @@ function ObjectDetailsTab({
         <div className="flex w-full flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <div className="text-sm text-primary/40">{t("details.label")}</div>
-            <div className="flex flex-row items-center gap-2 text-sm capitalize">
+            <div className="flex flex-row items-center gap-2 text-sm smart-capitalize">
               {getIconForLabel(search.label, "size-4 text-primary")}
-              {t(search.label, { ns: "objects" })}
+              {t(search.label, {
+                ns: "objects",
+              })}
               {search.sub_label && ` (${search.sub_label})`}
               {isAdmin && (
                 <Tooltip>
@@ -786,7 +796,7 @@ function ObjectDetailsTab({
               {topScore}%{subLabelScore && ` (${subLabelScore}%)`}
             </div>
           </div>
-          {snapScore && (
+          {snapScore != undefined && (
             <div className="flex flex-col gap-1.5">
               <div className="text-sm text-primary/40">
                 <div className="flex flex-row items-center gap-1">
@@ -825,7 +835,7 @@ function ObjectDetailsTab({
           )}
           <div className="flex flex-col gap-1.5">
             <div className="text-sm text-primary/40">{t("details.camera")}</div>
-            <div className="text-sm capitalize">
+            <div className="text-sm smart-capitalize">
               {search.camera.replaceAll("_", " ")}
             </div>
           </div>
@@ -854,16 +864,14 @@ function ObjectDetailsTab({
             className={cn("flex w-full flex-row gap-2", isMobile && "flex-col")}
           >
             {config?.semantic_search.enabled &&
+              setSimilarity != undefined &&
               search.data.type == "object" && (
                 <Button
                   className="w-full"
                   aria-label={t("itemMenu.findSimilar.aria")}
                   onClick={() => {
                     setSearch(undefined);
-
-                    if (setSimilarity) {
-                      setSimilarity();
-                    }
+                    setSimilarity();
                   }}
                 >
                   <div className="flex gap-1">
@@ -901,7 +909,9 @@ function ObjectDetailsTab({
             search.label,
           )) ? (
           <>
-            <div className="text-sm text-primary/40">Description</div>
+            <div className="text-sm text-primary/40">
+              {t("details.description.label")}
+            </div>
             <div className="flex h-64 flex-col items-center justify-center gap-3 border p-4 text-sm text-primary/40">
               <div className="flex">
                 <ActivityIndicator />
@@ -980,7 +990,7 @@ function ObjectDetailsTab({
             description={
               search.label
                 ? t("details.editSubLabel.desc", {
-                    label: t(search.label, { ns: "objects" }),
+                    label: search.label,
                   })
                 : t("details.editSubLabel.descNoLabel")
             }
@@ -995,7 +1005,7 @@ function ObjectDetailsTab({
             description={
               search.label
                 ? t("details.editLPR.desc", {
-                    label: t(search.label, { ns: "objects" }),
+                    label: search.label,
                   })
                 : t("details.editLPR.descNoLabel")
             }
@@ -1017,7 +1027,7 @@ export function ObjectSnapshotTab({
   search,
   onEventUploaded,
 }: ObjectSnapshotTabProps) {
-  const { t } = useTranslation(["components/dialog"]);
+  const { t, i18n } = useTranslation(["components/dialog"]);
   type SubmissionState = "reviewing" | "uploading" | "submitted";
 
   const [imgRef, imgLoaded, onImgLoad] = useImageLoaded();
@@ -1091,7 +1101,7 @@ export function ObjectSnapshotTab({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <a
-                          href={`${baseUrl}api/events/${search?.id}/snapshot.jpg`}
+                          href={`${baseUrl}api/events/${search?.id}/snapshot.jpg?bbox=1`}
                           download={`${search?.camera}_${search?.label}.jpg`}
                         >
                           <Chip className="cursor-pointer rounded-md bg-gray-500 bg-gradient-to-br from-gray-400 to-gray-500">
@@ -1128,42 +1138,67 @@ export function ObjectSnapshotTab({
                       </div>
                     </div>
 
-                    <div className="flex flex-row justify-center gap-2 md:justify-end">
+                    <div className="flex w-full flex-1 flex-col justify-center gap-2 md:ml-8 md:w-auto md:justify-end">
                       {state == "reviewing" && (
                         <>
-                          <Button
-                            className="bg-success"
-                            aria-label={t("explore.plus.review.true.label")}
-                            onClick={() => {
-                              setState("uploading");
-                              onSubmitToPlus(false);
-                            }}
-                          >
-                            {/^[aeiou]/i.test(search?.label || "")
-                              ? t("explore.plus.review.true.true_other", {
-                                  label: search?.label,
-                                })
-                              : t("explore.plus.review.true.true_one", {
-                                  label: search?.label,
-                                })}
-                          </Button>
-                          <Button
-                            className="text-white"
-                            aria-label={t("explore.plus.review.false.label")}
-                            variant="destructive"
-                            onClick={() => {
-                              setState("uploading");
-                              onSubmitToPlus(true);
-                            }}
-                          >
-                            {/^[aeiou]/i.test(search?.label || "")
-                              ? t("explore.plus.review.false.false_other", {
-                                  label: search?.label,
-                                })
-                              : t("explore.plus.review.false.false_one", {
-                                  label: search?.label,
-                                })}
-                          </Button>
+                          <div>
+                            {i18n.language === "en" ? (
+                              // English with a/an logic plus label
+                              <>
+                                {/^[aeiou]/i.test(search?.label || "") ? (
+                                  <Trans
+                                    ns="components/dialog"
+                                    values={{ label: search?.label }}
+                                  >
+                                    explore.plus.review.question.ask_an
+                                  </Trans>
+                                ) : (
+                                  <Trans
+                                    ns="components/dialog"
+                                    values={{ label: search?.label }}
+                                  >
+                                    explore.plus.review.question.ask_a
+                                  </Trans>
+                                )}
+                              </>
+                            ) : (
+                              // For other languages
+                              <Trans
+                                ns="components/dialog"
+                                values={{
+                                  untranslatedLabel: search?.label,
+                                  translatedLabel: t(search?.label, {
+                                    ns: "objects",
+                                  }),
+                                }}
+                              >
+                                explore.plus.review.question.ask_full
+                              </Trans>
+                            )}
+                          </div>
+                          <div className="flex w-full flex-row gap-2">
+                            <Button
+                              className="flex-1 bg-success"
+                              aria-label={t("button.yes", { ns: "common" })}
+                              onClick={() => {
+                                setState("uploading");
+                                onSubmitToPlus(false);
+                              }}
+                            >
+                              {t("button.yes", { ns: "common" })}
+                            </Button>
+                            <Button
+                              className="flex-1 text-white"
+                              aria-label={t("button.no", { ns: "common" })}
+                              variant="destructive"
+                              onClick={() => {
+                                setState("uploading");
+                                onSubmitToPlus(true);
+                              }}
+                            >
+                              {t("button.no", { ns: "common" })}
+                            </Button>
+                          </div>
                         </>
                       )}
                       {state == "uploading" && <ActivityIndicator />}
@@ -1199,55 +1234,58 @@ export function VideoTab({ search }: VideoTabProps) {
   const source = `${baseUrl}vod/${search.camera}/start/${search.start_time}/end/${endTime}/index.m3u8`;
 
   return (
-    <GenericVideoPlayer source={source}>
-      {reviewItem && (
-        <div
-          className={cn(
-            "absolute top-2 z-10 flex items-center gap-2",
-            isIOS ? "right-8" : "right-2",
-          )}
-        >
-          <Tooltip>
-            <TooltipTrigger>
-              <Chip
-                className="cursor-pointer rounded-md bg-gray-500 bg-gradient-to-br from-gray-400 to-gray-500"
-                onClick={() => {
-                  if (reviewItem?.id) {
-                    const params = new URLSearchParams({
-                      id: reviewItem.id,
-                    }).toString();
-                    navigate(`/review?${params}`);
-                  }
-                }}
-              >
-                <FaHistory className="size-4 text-white" />
-              </Chip>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent>
-                {t("itemMenu.viewInHistory.label")}
-              </TooltipContent>
-            </TooltipPortal>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a
-                download
-                href={`${baseUrl}api/${search.camera}/start/${search.start_time}/end/${endTime}/clip.mp4`}
-              >
-                <Chip className="cursor-pointer rounded-md bg-gray-500 bg-gradient-to-br from-gray-400 to-gray-500">
-                  <FaDownload className="size-4 text-white" />
+    <>
+      <span tabIndex={0} className="sr-only" />
+      <GenericVideoPlayer source={source}>
+        {reviewItem && (
+          <div
+            className={cn(
+              "absolute top-2 z-10 flex items-center gap-2",
+              isIOS ? "right-8" : "right-2",
+            )}
+          >
+            <Tooltip>
+              <TooltipTrigger>
+                <Chip
+                  className="cursor-pointer rounded-md bg-gray-500 bg-gradient-to-br from-gray-400 to-gray-500"
+                  onClick={() => {
+                    if (reviewItem?.id) {
+                      const params = new URLSearchParams({
+                        id: reviewItem.id,
+                      }).toString();
+                      navigate(`/review?${params}`);
+                    }
+                  }}
+                >
+                  <FaHistory className="size-4 text-white" />
                 </Chip>
-              </a>
-            </TooltipTrigger>
-            <TooltipPortal>
-              <TooltipContent>
-                {t("button.download", { ns: "common" })}
-              </TooltipContent>
-            </TooltipPortal>
-          </Tooltip>
-        </div>
-      )}
-    </GenericVideoPlayer>
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  {t("itemMenu.viewInHistory.label")}
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  download
+                  href={`${baseUrl}api/${search.camera}/start/${search.start_time}/end/${endTime}/clip.mp4?trim=end`}
+                >
+                  <Chip className="cursor-pointer rounded-md bg-gray-500 bg-gradient-to-br from-gray-400 to-gray-500">
+                    <FaDownload className="size-4 text-white" />
+                  </Chip>
+                </a>
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent>
+                  {t("button.download", { ns: "common" })}
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+          </div>
+        )}
+      </GenericVideoPlayer>
+    </>
   );
 }

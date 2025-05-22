@@ -25,7 +25,7 @@ import { LuExternalLink } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-const STEPS = ["Enter Face Name", "Upload Face Image", "Next Steps"];
+const STEPS = ["steps.faceName", "steps.uploadFace", "steps.nextSteps"];
 
 type CreateFaceWizardDialogProps = {
   open: boolean;
@@ -107,7 +107,11 @@ export default function CreateFaceWizardDialog({
           <Title>{t("button.addFace")}</Title>
           {isDesktop && <Description>{t("description.addFace")}</Description>}
         </Header>
-        <StepIndicator steps={STEPS} currentStep={step} />
+        <StepIndicator
+          steps={STEPS}
+          currentStep={step}
+          translationNameSpace="views/faceLibrary"
+        />
         {step == 0 && (
           <TextEntry
             placeholder={t("description.placeholder")}
@@ -115,6 +119,8 @@ export default function CreateFaceWizardDialog({
               setName(name);
               setStep(1);
             }}
+            regexPattern={/^[\p{L}\p{N}\s'_-]{1,50}$/u}
+            regexErrorMessage={t("description.invalidName")}
           >
             <div className="flex justify-end py-2">
               <Button variant="select" type="submit">
@@ -124,13 +130,18 @@ export default function CreateFaceWizardDialog({
           </TextEntry>
         )}
         {step == 1 && (
-          <ImageEntry onSave={onUploadImage}>
-            <div className="flex justify-end py-2">
-              <Button variant="select" type="submit">
-                {t("button.next", { ns: "common" })}
-              </Button>
+          <>
+            <div className="px-8 py-2 text-center text-sm text-secondary-foreground">
+              {t("steps.description.uploadFace", { name })}
             </div>
-          </ImageEntry>
+            <ImageEntry onSave={onUploadImage}>
+              <div className="flex justify-end py-2">
+                <Button variant="select" type="submit">
+                  {t("button.next", { ns: "common" })}
+                </Button>
+              </div>
+            </ImageEntry>
+          </>
         )}
         {step == 2 && (
           <div className="mt-2">

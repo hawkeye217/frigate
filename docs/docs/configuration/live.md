@@ -42,6 +42,16 @@ go2rtc:
       - "ffmpeg:http_cam#audio=opus" # <- copy of the stream which transcodes audio to the missing codec (usually will be opus)
 ```
 
+If your camera does not support AAC audio or are having problems with Live view, try transcoding to AAC audio directly:
+
+```yaml
+go2rtc:
+  streams:
+    rtsp_cam: # <- for RTSP streams
+      - "ffmpeg:rtsp://192.168.1.5:554/live0#video=copy#audio=aac" # <- copies video stream and transcodes to aac audio
+      - "ffmpeg:rtsp_cam#audio=opus" # <- provides support for WebRTC
+```
+
 If your camera does not have audio and you are having problems with Live view, you should have go2rtc send video only:
 
 ```yaml
@@ -186,6 +196,12 @@ The default dashboard ("All Cameras") will always use Smart Streaming and the fi
 ### Disabling cameras
 
 Cameras can be temporarily disabled through the Frigate UI and through [MQTT](/integrations/mqtt#frigatecamera_nameenabledset) to conserve system resources. When disabled, Frigate's ffmpeg processes are terminated — recording stops, object detection is paused, and the Live dashboard displays a blank image with a disabled message. Review items, tracked objects, and historical footage for disabled cameras can still be accessed via the UI.
+
+:::note
+
+Disabling a camera via the Frigate UI or MQTT is temporary and does not persist through restarts of Frigate.
+
+:::
 
 For restreamed cameras, go2rtc remains active but does not use system resources for decoding or processing unless there are active external consumers (such as the Advanced Camera Card in Home Assistant using a go2rtc source).
 

@@ -1,14 +1,15 @@
 {
   "documentTitle": {
     "masksAndZones": "Editor de máscaras y zonas - Frigate",
-    "object": "Configuración de objetos - Frigate",
+    "object": "Depurar - Frigate",
     "default": "Configuración - Frigate",
     "authentication": "Configuración de autenticación - Frigate",
     "camera": "Configuración de cámara - Frigate",
     "motionTuner": "Ajuste de movimiento - Frigate",
     "classification": "Configuración de clasificación - Frigate",
     "general": "Configuración general - Frigate",
-    "frigatePlus": "Configuración de Frigate+ - Frigate"
+    "frigatePlus": "Configuración de Frigate+ - Frigate",
+    "notifications": "Configuración de Notificaciones - Frigate"
   },
   "menu": {
     "cameras": "Configuración de cámara",
@@ -139,7 +140,9 @@
     "birdClassification": {
       "title": "Clasificación de Aves",
       "desc": "La clasificación de aves identifica aves conocidas utilizando un modelo de TensorFlow cuantizado. Cuando se reconoce una ave conocida, su nombre común se añadirá como una subetiqueta. Esta información se incluye en la interfaz de usuario, en los filtros y en las notificaciones."
-    }
+    },
+    "restart_required": "Es necesario reiniciar (se han cambiado las configuraciones de clasificación)",
+    "unsavedChanges": "Cambios en la configuración de clasificación no guardados"
   },
   "camera": {
     "review": {
@@ -166,7 +169,8 @@
       "limitDetections": "Limitar detecciones a zonas específicas",
       "toast": {
         "success": "La configuración de clasificación de revisión ha sido guardada. Reinicia Frigate para aplicar los cambios."
-      }
+      },
+      "unsavedChanges": "Configuración de clasificación de revisión no guardada para {{camera}}"
     },
     "title": "Ajustes de la cámara",
     "streams": {
@@ -242,14 +246,15 @@
       },
       "name": {
         "title": "Nombre",
-        "inputPlaceHolder": "Introduce un nombre...",
+        "inputPlaceHolder": "Introduce un nombre…",
         "tips": "El nombre debe tener al menos 2 caracteres y no debe ser el nombre de una cámara ni de otra zona."
       },
       "documentTitle": "Editar Zona - Frigate",
       "clickDrawPolygon": "Haz clic para dibujar un polígono en la imagen.",
       "speedEstimation": {
         "desc": "Habilitar la estimación de velocidad para objetos en esta zona. La zona debe tener exactamente 4 puntos.",
-        "title": "Estimación de velocidad"
+        "title": "Estimación de velocidad",
+        "docs": "Leer la documentación"
       },
       "speedThreshold": {
         "toast": {
@@ -334,7 +339,8 @@
       "point_many": "{{count}} puntos",
       "point_other": "{{count}} puntos",
       "clickDrawPolygon": "Haz clic para dibujar un polígono en la imagen."
-    }
+    },
+    "restart_required": "Es necesario reiniciar (se han cambiado las máscaras/zonas)"
   },
   "motionDetectionTuner": {
     "title": "Sintonizador de Detección de Movimiento",
@@ -356,7 +362,8 @@
     },
     "toast": {
       "success": "Los ajustes de movimiento han sido guardados."
-    }
+    },
+    "unsavedChanges": "Cambios no guardados en el sintonizador de movimiento ({{camera}})"
   },
   "debug": {
     "title": "Depuración",
@@ -388,12 +395,12 @@
     "motion": {
       "title": "Cajas de movimiento",
       "desc": "Mostrar cajas alrededor de las áreas donde se detecta movimiento",
-      "tips": "<p className=\"mb-2\"><strong>Cajas de Movimiento</strong></p><br><p>Se superpondrán cajas rojas en las áreas del marco donde se está detectando movimiento actualmente</p>"
+      "tips": "<p><strong>Cajas de Movimiento</strong></p><br><p>Se superpondrán cajas rojas en las áreas del fotograma donde se está detectando movimiento actualmente</p>"
     },
     "regions": {
       "title": "Regiones",
       "desc": "Mostrar una caja de la región de interés enviada al detector de objetos",
-      "tips": "<p className=\"mb-2\"><strong>Cajas de Región</strong></p><br><p>Se superpondrán cajas verdes brillantes en las áreas de interés del marco que se están enviando al detector de objetos.</p>"
+      "tips": "<p><strong>Cajas de Región</strong></p><br><p>Se superpondrán cajas verdes brillantes en las áreas de interés del fotograma que se envían al detector de objetos.</p>"
     },
     "objectShapeFilterDrawing": {
       "title": "Dibujo de Filtro de Forma de Objetos",
@@ -480,11 +487,17 @@
       },
       "changeRole": {
         "title": "Cambiar rol de usuario",
-        "desc": "Actualizar permisos para <span className=\"font-medium\">{{username}}</span>",
-        "roleInfo": "<p>Selecciona el rol adecuado para este usuario:</p><ul className=\"mt-2 space-y-1 pl-5\"><li> • <span className=\"font-medium\">Admin:</span> Acceso completo a todas las funciones. </li><li> • <span className=\"font-medium\">Viewer:</span> Limitado solo a los paneles en vivo, Revisión, Explorar y Exportaciones.</li></ul>"
+        "desc": "Actualizar permisos para <strong>{{username}}</strong>",
+        "roleInfo": {
+          "intro": "Selecciona el rol adecuado para este usuario:",
+          "adminDesc": "Acceso completo a todas las funciones.",
+          "viewerDesc": "Limitado a paneles en vivo, revisión, exploración y exportaciones únicamente.",
+          "viewer": "Espectador",
+          "admin": "Administrador"
+        }
       },
       "deleteUser": {
-        "warn": "¿Estás seguro de que quieres eliminar a <span className=\"font-bold\">{{username}}</span>?",
+        "warn": "¿Estás seguro de que quieres eliminar <strong>{{username}}</strong>?",
         "title": "Eliminar usuario",
         "desc": "Esta acción no se puede deshacer. Esto eliminará permanentemente la cuenta de usuario y eliminará todos los datos asociados."
       }
@@ -501,7 +514,7 @@
     "notificationUnavailable": {
       "title": "Notificaciones no disponibles",
       "documentation": "Leer la documentación",
-      "desc": "Las notificaciones push web requieren un contexto seguro (<code>https://...</code>). Esto es una limitación del navegador. Accede a Frigate de forma segura para usar las notificaciones."
+      "desc": "Las notificaciones push web requieren un contexto seguro (<code>https://…</code>). Esto es una limitación del navegador. Accede a Frigate de forma segura para usar las notificaciones."
     },
     "globalSettings": {
       "title": "Configuración global",
@@ -529,7 +542,8 @@
       "untilRestart": "Suspender hasta reiniciar",
       "30minutes": "Suspender por 30 minutos",
       "24hours": "Suspender por 24 horas",
-      "10minutes": "Suspender por 10 minutos"
+      "10minutes": "Suspender por 10 minutos",
+      "suspend": "Suspender"
     },
     "cancelSuspension": "Cancelar suspensión",
     "toast": {
@@ -541,7 +555,9 @@
         "registerFailed": "Error al guardar el registro de notificaciones."
       }
     },
-    "unregisterDevice": "Cancelar el registro de este dispositivo"
+    "unregisterDevice": "Cancelar el registro de este dispositivo",
+    "unsavedRegistrations": "Registros de notificaciones no guardados",
+    "unsavedChanges": "Cambios de notificaciones no guardados"
   },
   "frigatePlus": {
     "title": "Configuración de Frigate+",
@@ -570,16 +586,22 @@
       "supportedDetectors": "Detectores compatibles",
       "dimensions": "Dimensiones",
       "cameras": "Cámaras",
-      "loading": "Cargando información del modelo...",
+      "loading": "Cargando información del modelo…",
       "error": "No se pudo cargar la información del modelo",
       "availableModels": "Modelos disponibles",
-      "loadingAvailableModels": "Cargando modelos disponibles...",
+      "loadingAvailableModels": "Cargando modelos disponibles…",
       "modelSelect": "Tus modelos disponibles en Frigate+ se pueden seleccionar aquí. Ten en cuenta que solo se pueden seleccionar modelos compatibles con tu configuración actual de detectores.",
-      "trainDate": "Fecha de entrenamiento"
+      "trainDate": "Fecha de entrenamiento",
+      "plusModelType": {
+        "baseModel": "Modelo Base",
+        "userModel": "Ajustado Finamente"
+      }
     },
     "toast": {
       "success": "La configuración de Frigate+ se ha guardado. Reinicia Frigate para aplicar los cambios.",
       "error": "No se pudieron guardar los cambios en la configuración: {{errorMessage}}"
-    }
+    },
+    "restart_required": "Es necesario reiniciar (se ha cambiado el modelo Frigate+)",
+    "unsavedChanges": "Cambios en la configuración de Frigate+ no guardados"
   }
 }

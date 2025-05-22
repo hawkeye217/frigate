@@ -202,9 +202,15 @@ async def get_current_user(request: Request):
 
 def require_role(required_roles: List[str]):
     async def role_checker(request: Request):
+        proxy_config: ProxyConfig = request.app.frigate_config.proxy
+
         # Get role from header (could be comma-separated)
         role_header = request.headers.get("remote-role")
-        roles = [r.strip() for r in role_header.split(",")] if role_header else []
+        roles = (
+            [r.strip() for r in role_header.split(proxy_config.separator)]
+            if role_header
+            else []
+        )
 
         # Check if we have any roles
         if not roles:
@@ -261,14 +267,17 @@ def auth(request: Request):
 
         role_header = proxy_config.header_map.role
         role = (
-            request.headers.get(role_header, default="viewer")
+            request.headers.get(role_header, default=proxy_config.default_role)
             if role_header
-            else "viewer"
+            else proxy_config.default_role
         )
 
-        # if comma-separated with "admin", use "admin", else "viewer"
+        # if comma-separated with "admin", use "admin", else use default role
         success_response.headers["remote-role"] = (
-            "admin" if role and "admin" in role else "viewer"
+            "admin"
+            if role
+            and "admin" in [r.strip() for r in role.split(proxy_config.separator)]
+            else proxy_config.default_role
         )
 
         return success_response

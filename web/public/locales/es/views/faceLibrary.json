@@ -7,8 +7,11 @@
     "person": "Persona",
     "confidence": "Confianza",
     "face": "Detalles del rostro",
-    "faceDesc": "Detalles del rostro y del objeto asociado",
-    "timestamp": "Marca de tiempo"
+    "faceDesc": "Detalles del objeto rastreado que generó este rostro",
+    "timestamp": "Marca de tiempo",
+    "subLabelScore": "Puntuación de Etiqueta Secundaria",
+    "scoreInfo": "La puntuación de etiqueta secundaria es la puntuación ponderada de todas las confidencias de rostros reconocidos, por lo que puede diferir de la puntuación mostrada en la instantánea.",
+    "unknown": "Desconocido"
   },
   "documentTitle": "Biblioteca de Rostros - Frigate",
   "uploadFaceImage": {
@@ -23,7 +26,8 @@
   },
   "train": {
     "title": "Entrenar",
-    "aria": "Seleccionar entrenamiento"
+    "aria": "Seleccionar entrenamiento",
+    "empty": "No hay intentos recientes de reconocimiento facial"
   },
   "selectItem": "Seleccionar {{item}}",
   "selectFace": "Seleccionar rostro",
@@ -32,16 +36,18 @@
     "desc": "¿Estás seguro de que quieres eliminar la colección {{name}}? Esto eliminará permanentemente todos los rostros asociados."
   },
   "button": {
-    "deleteFaceAttempts": "Eliminar intentos de rostro",
+    "deleteFaceAttempts": "Eliminar Rostros",
     "addFace": "Agregar rostro",
     "uploadImage": "Subir imagen",
-    "reprocessFace": "Reprocesar rostro"
+    "reprocessFace": "Reprocesar rostro",
+    "renameFace": "Renombrar Rostro",
+    "deleteFace": "Eliminar Rostro"
   },
   "imageEntry": {
     "validation": {
       "selectImage": "Por favor, selecciona un archivo de imagen."
     },
-    "dropActive": "Suelta la imagen aquí...",
+    "dropActive": "Suelta la imagen aquí…",
     "dropInstructions": "Arrastra y suelta una imagen aquí, o haz clic para seleccionar",
     "maxSize": "Tamaño máximo: {{size}}MB"
   },
@@ -56,7 +62,8 @@
       "deletedFace_one": "{{count}} rostro eliminado con éxito",
       "deletedFace_many": "{{count}} rostros eliminados con éxito",
       "deletedFace_other": "{{count}} rostros eliminados con éxito",
-      "uploadedImage": "Imagen subida con éxito."
+      "uploadedImage": "Imagen subida con éxito.",
+      "renamedFace": "Rostro renombrado con éxito a {{name}}"
     },
     "error": {
       "uploadingImageFailed": "No se pudo subir la imagen: {{errorMessage}}",
@@ -64,10 +71,31 @@
       "deleteFaceFailed": "No se pudo eliminar: {{errorMessage}}",
       "deleteNameFailed": "No se pudo eliminar el nombre: {{errorMessage}}",
       "trainFailed": "No se pudo entrenar: {{errorMessage}}",
-      "updateFaceScoreFailed": "No se pudo actualizar la puntuación del rostro: {{errorMessage}}"
+      "updateFaceScoreFailed": "No se pudo actualizar la puntuación del rostro: {{errorMessage}}",
+      "renameFaceFailed": "No se pudo renombrar el rostro: {{errorMessage}}"
     }
   },
   "readTheDocs": "Leer la documentación",
   "trainFaceAs": "Entrenar rostro como:",
-  "trainFace": "Entrenar rostro"
+  "trainFace": "Entrenar rostro",
+  "steps": {
+    "faceName": "Introducir Nombre de Rostro",
+    "uploadFace": "Subir Imagen de Rostro",
+    "nextSteps": "Próximos Pasos",
+    "description": {
+      "uploadFace": "Sube una imagen de {{name}} que muestre su rostro desde un ángulo frontal. La imagen no necesita estar recortada solo a su rostro."
+    }
+  },
+  "renameFace": {
+    "title": "Renombrar Rostro",
+    "desc": "Introduce un nuevo nombre para {{name}}"
+  },
+  "deleteFaceAttempts": {
+    "title": "Eliminar Rostros",
+    "desc_one": "¿Estás seguro de que quieres eliminar {{count}} rostro? Esta acción no se puede deshacer.",
+    "desc_many": "¿Estás seguro de que quieres eliminar {{count}} rostros? Esta acción no se puede deshacer.",
+    "desc_other": "¿Estás seguro de que quieres eliminar {{count}} rostros? Esta acción no se puede deshacer."
+  },
+  "collections": "Colecciones",
+  "nofaces": "No hay rostros disponibles"
 }

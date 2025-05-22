@@ -165,7 +165,7 @@ export default function ClassificationSettingsView({
       .finally(() => {
         addMessage(
           "search_settings_restart",
-          `Restart required (Classification settings changed)`,
+          t("classification.restart_required"),
           undefined,
           "search_settings",
         );
@@ -220,7 +220,7 @@ export default function ClassificationSettingsView({
     if (changedValue) {
       addMessage(
         "search_settings",
-        `Unsaved Classification settings changes`,
+        t("classification.unsavedChanges"),
         undefined,
         "search_settings",
       );
@@ -336,7 +336,9 @@ export default function ClassificationSettingsView({
               }
             >
               <SelectTrigger className="w-20">
-                {classificationSettings.search.model_size}
+                {t(
+                  `classification.semanticSearch.modelSize.${classificationSettings.search.model_size}.title`,
+                )}
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -466,7 +468,9 @@ export default function ClassificationSettingsView({
               }
             >
               <SelectTrigger className="w-20">
-                {classificationSettings.face.model_size}
+                {t(
+                  `classification.faceRecognition.modelSize.${classificationSettings.face.model_size}.title`,
+                )}
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>

@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Any
 
 import cv2
 import numpy as np
@@ -148,27 +149,17 @@ def __post_process_multipart_yolo(
                     bw = ((dw * 2.0) ** 2) * anchor_w
                     bh = ((dh * 2.0) ** 2) * anchor_h
 
-                    x1 = max(0, bx - bw / 2) / width
-                    y1 = max(0, by - bh / 2) / height
-                    x2 = min(width, bx + bw / 2) / width
-                    y2 = min(height, by + bh / 2) / height
+                    x1 = max(0, bx - bw / 2)
+                    y1 = max(0, by - bh / 2)
+                    x2 = min(width, bx + bw / 2)
+                    y2 = min(height, by + bh / 2)
 
                     all_boxes.append([x1, y1, x2, y2])
                     all_scores.append(conf)
                     all_class_ids.append(class_id)
 
-    formatted_boxes = [
-        [
-            int(x1 * width),
-            int(y1 * height),
-            int((x2 - x1) * width),
-            int((y2 - y1) * height),
-        ]
-        for x1, y1, x2, y2 in all_boxes
-    ]
-
     indices = cv2.dnn.NMSBoxes(
-        bboxes=formatted_boxes,
+        bboxes=all_boxes,
         scores=all_scores,
         score_threshold=0.4,
         nms_threshold=0.4,
@@ -181,13 +172,25 @@ def __post_process_multipart_yolo(
             class_id = all_class_ids[idx]
             conf = all_scores[idx]
             x1, y1, x2, y2 = all_boxes[idx]
-            results[i] = [class_id, conf, y1, x1, y2, x2]
+            results[i] = [
+                class_id,
+                conf,
+                y1 / height,
+                x1 / width,
+                y2 / height,
+                x2 / width,
+            ]
 
-    return np.array(results, dtype=np.float32)
+    return results
 
 
 def __post_process_nms_yolo(predictions: np.ndarray, width, height) -> np.ndarray:
-    predictions = np.squeeze(predictions).T
+    predictions = np.squeeze(predictions)
+
+    # transpose the output so it has order (inferences, class_ids)
+    if predictions.shape[0] < predictions.shape[1]:
+        predictions = predictions.T
+
     scores = np.max(predictions[:, 4:], axis=1)
     predictions = predictions[scores > 0.4, :]
     scores = scores[scores > 0.4]
@@ -195,9 +198,14 @@ def __post_process_nms_yolo(predictions: np.ndarray, width, height) -> np.ndarra
 
     # Rescale box
     boxes = predictions[:, :4]
+    boxes_xyxy = np.ones_like(boxes)
+    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2
+    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2
+    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2
+    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2
+    boxes = boxes_xyxy
 
-    input_shape = np.array([width, height, width, height])
-    boxes = np.divide(boxes, input_shape, dtype=np.float32)
+    # run NMS
     indices = cv2.dnn.NMSBoxes(boxes, scores, score_threshold=0.4, nms_threshold=0.4)
     detections = np.zeros((20, 6), np.float32)
     for i, (bbox, confidence, class_id) in enumerate(
@@ -209,10 +217,10 @@ def __post_process_nms_yolo(predictions: np.ndarray, width, height) -> np.ndarra
         detections[i] = [
             class_id,
             confidence,
-            bbox[1] - bbox[3] / 2,
-            bbox[0] - bbox[2] / 2,
-            bbox[1] + bbox[3] / 2,
-            bbox[0] + bbox[2] / 2,
+            bbox[1] / height,
+            bbox[0] / width,
+            bbox[3] / height,
+            bbox[2] / width,
         ]
 
     return detections
@@ -225,12 +233,59 @@ def post_process_yolo(output: list[np.ndarray], width: int, height: int) -> np.n
         return __post_process_nms_yolo(output[0], width, height)
 
 
+def post_process_yolox(
+    predictions: np.ndarray,
+    width: int,
+    height: int,
+    grids: np.ndarray,
+    expanded_strides: np.ndarray,
+) -> np.ndarray:
+    predictions[..., :2] = (predictions[..., :2] + grids) * expanded_strides
+    predictions[..., 2:4] = np.exp(predictions[..., 2:4]) * expanded_strides
+
+    # process organized predictions
+    predictions = predictions[0]
+    boxes = predictions[:, :4]
+    scores = predictions[:, 4:5] * predictions[:, 5:]
+
+    boxes_xyxy = np.ones_like(boxes)
+    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2
+    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2
+    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2
+    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2
+
+    cls_inds = scores.argmax(1)
+    scores = scores[np.arange(len(cls_inds)), cls_inds]
+
+    indices = cv2.dnn.NMSBoxes(
+        boxes_xyxy, scores, score_threshold=0.4, nms_threshold=0.4
+    )
+
+    detections = np.zeros((20, 6), np.float32)
+    for i, (bbox, confidence, class_id) in enumerate(
+        zip(boxes_xyxy[indices], scores[indices], cls_inds[indices])
+    ):
+        if i == 20:
+            break
+
+        detections[i] = [
+            class_id,
+            confidence,
+            bbox[1] / height,
+            bbox[0] / width,
+            bbox[3] / height,
+            bbox[2] / width,
+        ]
+
+    return detections
+
+
 ### ONNX Utilities
 
 
 def get_ort_providers(
     force_cpu: bool = False, device: str = "AUTO", requires_fp16: bool = False
-) -> tuple[list[str], list[dict[str, any]]]:
+) -> tuple[list[str], list[dict[str, Any]]]:
     if force_cpu:
         return (
             ["CPUExecutionProvider"],
@@ -286,7 +341,6 @@ def get_ort_providers(
             providers.append(provider)
             options.append(
                 {
-                    "arena_extend_strategy": "kSameAsRequested",
                     "cache_dir": os.path.join(MODEL_CACHE_DIR, "openvino/ort"),
                     "device_type": device,
                 }

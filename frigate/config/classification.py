@@ -78,7 +78,13 @@ class FaceRecognitionConfig(FrigateBaseModel):
         le=1.0,
     )
     min_area: int = Field(
-        default=500, title="Min area of face box to consider running face recognition."
+        default=750, title="Min area of face box to consider running face recognition."
+    )
+    min_faces: int = Field(
+        default=1,
+        gt=0,
+        le=6,
+        title="Min face attempts for the sub label to be applied to the person object.",
     )
     save_attempts: int = Field(
         default=100, ge=0, title="Number of face attempts to save in the train tab."
@@ -91,10 +97,10 @@ class FaceRecognitionConfig(FrigateBaseModel):
 class CameraFaceRecognitionConfig(FrigateBaseModel):
     enabled: bool = Field(default=False, title="Enable face recognition.")
     min_area: int = Field(
-        default=500, title="Min area of face box to consider running face recognition."
+        default=750, title="Min area of face box to consider running face recognition."
     )
 
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())
 
 
 class LicensePlateRecognitionConfig(FrigateBaseModel):
@@ -102,6 +108,9 @@ class LicensePlateRecognitionConfig(FrigateBaseModel):
     device: Optional[LPRDeviceEnum] = Field(
         default=LPRDeviceEnum.CPU,
         title="The device used for license plate recognition.",
+    )
+    model_size: str = Field(
+        default="small", title="The size of the embeddings model used."
     )
     detection_threshold: float = Field(
         default=0.7,
@@ -165,4 +174,4 @@ class CameraLicensePlateRecognitionConfig(FrigateBaseModel):
         le=10,
     )
 
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+    model_config = ConfigDict(extra="forbid", protected_namespaces=())

@@ -5,7 +5,7 @@ import math
 import os
 from collections import defaultdict
 from statistics import median
-from typing import Optional
+from typing import Any, Optional
 
 import cv2
 import numpy as np
@@ -18,6 +18,7 @@ from frigate.config import (
 )
 from frigate.const import CLIPS_DIR, THUMB_DIR
 from frigate.review.types import SeverityEnum
+from frigate.util.builtin import sanitize_float
 from frigate.util.image import (
     area,
     calculate_region,
@@ -38,7 +39,7 @@ class TrackedObject:
         camera_config: CameraConfig,
         ui_config: UIConfig,
         frame_cache,
-        obj_data: dict[str, any],
+        obj_data: dict[str, Any],
     ):
         # set the score history then remove as it is not part of object state
         self.score_history = obj_data["score_history"]
@@ -144,30 +145,29 @@ class TrackedObject:
                 obj_data,
                 self.camera_config.frame_shape,
             ):
-                # use the current frame time if the object's frame time isn't in the frame cache
-                selected_frame_time = (
-                    current_frame_time
-                    if obj_data["frame_time"] not in self.frame_cache.keys()
-                    else obj_data["frame_time"]
-                )
-                self.thumbnail_data = {
-                    "frame_time": selected_frame_time,
-                    "box": obj_data["box"],
-                    "area": obj_data["area"],
-                    "region": obj_data["region"],
-                    "score": obj_data["score"],
-                    "attributes": obj_data["attributes"],
-                    "current_estimated_speed": self.current_estimated_speed,
-                    "velocity_angle": self.velocity_angle,
-                    "path_data": self.path_data,
-                    "recognized_license_plate": obj_data.get(
-                        "recognized_license_plate"
-                    ),
-                    "recognized_license_plate_score": obj_data.get(
-                        "recognized_license_plate_score"
-                    ),
-                }
-                thumb_update = True
+                if obj_data["frame_time"] == current_frame_time:
+                    self.thumbnail_data = {
+                        "frame_time": obj_data["frame_time"],
+                        "box": obj_data["box"],
+                        "area": obj_data["area"],
+                        "region": obj_data["region"],
+                        "score": obj_data["score"],
+                        "attributes": obj_data["attributes"],
+                        "current_estimated_speed": self.current_estimated_speed,
+                        "velocity_angle": self.velocity_angle,
+                        "path_data": self.path_data.copy(),
+                        "recognized_license_plate": obj_data.get(
+                            "recognized_license_plate"
+                        ),
+                        "recognized_license_plate_score": obj_data.get(
+                            "recognized_license_plate_score"
+                        ),
+                    }
+                    thumb_update = True
+                else:
+                    logger.debug(
+                        f"{self.camera_config.name}: Object frame time {obj_data['frame_time']} is not equal to the current frame time {current_frame_time}, not updating thumbnail"
+                    )
 
         # check zones
         current_zones = []
@@ -202,6 +202,11 @@ class TrackedObject:
                                 self.camera_config.detect.fps,
                             )
                         )
+
+                        # users can configure speed zones incorrectly, so sanitize speed_magnitude
+                        # and velocity_angle in case the values come back as inf or NaN
+                        speed_magnitude = sanitize_float(speed_magnitude)
+                        self.velocity_angle = sanitize_float(self.velocity_angle)
 
                         if self.ui_config.unit_system == "metric":
                             self.current_estimated_speed = (
@@ -279,7 +284,7 @@ class TrackedObject:
                 self.attributes[attr["label"]] = attr["score"]
 
         # populate the sub_label for object with highest scoring logo
-        if self.obj_data["label"] in ["car", "package", "person"]:
+        if self.obj_data["label"] in ["car", "motorcycle", "package", "person"]:
             recognized_logos = {
                 k: self.attributes[k] for k in self.logos if k in self.attributes
             }
@@ -379,22 +384,22 @@ class TrackedObject:
             "current_estimated_speed": self.current_estimated_speed,
             "average_estimated_speed": self.average_estimated_speed,
             "velocity_angle": self.velocity_angle,
-            "path_data": self.path_data,
+            "path_data": self.path_data.copy(),
             "recognized_license_plate": self.obj_data.get("recognized_license_plate"),
         }
 
         return event
 
-    def is_active(self):
+    def is_active(self) -> bool:
         return not self.is_stationary()
 
-    def is_stationary(self):
+    def is_stationary(self) -> bool:
         return (
             self.obj_data["motionless_count"]
             > self.camera_config.detect.stationary.threshold
         )
 
-    def get_thumbnail(self, ext: str):
+    def get_thumbnail(self, ext: str) -> bytes | None:
         img_bytes = self.get_img_bytes(
             ext, timestamp=False, bounding_box=False, crop=True, height=175
         )
@@ -405,7 +410,7 @@ class TrackedObject:
             _, img = cv2.imencode(f".{ext}", np.zeros((175, 175, 3), np.uint8))
             return img.tobytes()
 
-    def get_clean_png(self):
+    def get_clean_png(self) -> bytes | None:
         if self.thumbnail_data is None:
             return None
 
@@ -434,7 +439,7 @@ class TrackedObject:
         crop=False,
         height: int | None = None,
         quality: int | None = None,
-    ):
+    ) -> bytes | None:
         if self.thumbnail_data is None:
             return None
 
@@ -475,6 +480,7 @@ class TrackedObject:
             # draw any attributes
             for attribute in self.thumbnail_data["attributes"]:
                 box = attribute["box"]
+                box_area = int((box[2] - box[0]) * (box[3] - box[1]))
                 draw_box_with_label(
                     best_frame,
                     box[0],
@@ -482,7 +488,7 @@ class TrackedObject:
                     box[2],
                     box[3],
                     attribute["label"],
-                    f"{attribute['score']:.0%}",
+                    f"{attribute['score']:.0%} {str(box_area)}",
                     thickness=thickness,
                     color=color,
                 )
@@ -622,7 +628,7 @@ class TrackedObjectAttribute:
         self.ratio = raw_data[4]
         self.region = raw_data[5]
 
-    def get_tracking_data(self) -> dict[str, any]:
+    def get_tracking_data(self) -> dict[str, Any]:
         """Return data saved to the object."""
         return {
             "label": self.label,
@@ -630,7 +636,7 @@ class TrackedObjectAttribute:
             "box": self.box,
         }
 
-    def find_best_object(self, objects: list[dict[str, any]]) -> Optional[str]:
+    def find_best_object(self, objects: list[dict[str, Any]]) -> Optional[str]:
         """Find the best attribute for each object and return its ID."""
         best_object_area = None
         best_object_id = None
@@ -650,8 +656,9 @@ class TrackedObjectAttribute:
                 best_object_id = obj["id"]
                 best_object_label = obj["label"]
             else:
-                if best_object_label == "car" and obj["label"] == "car":
-                    # if multiple cars are overlapping with the same label then the label will not be assigned
+                if best_object_label == obj["label"]:
+                    # if multiple objects of the same type are overlapping
+                    # then the attribute will not be assigned
                     return None
                 elif object_area < best_object_area:
                     # if a car and person are overlapping then assign the label to the smaller object (which should be the person)

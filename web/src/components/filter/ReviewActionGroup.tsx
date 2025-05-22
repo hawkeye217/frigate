@@ -17,6 +17,7 @@ import {
 } from "../ui/alert-dialog";
 import useKeyboardListener from "@/hooks/use-keyboard-listener";
 import { Trans, useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 type ReviewActionGroupProps = {
   selectedReviews: string[];
@@ -41,11 +42,33 @@ export default function ReviewActionGroup({
     pullLatestData();
   }, [selectedReviews, setSelectedReviews, pullLatestData]);
 
-  const onDelete = useCallback(async () => {
-    await axios.post(`reviews/delete`, { ids: selectedReviews });
-    setSelectedReviews([]);
-    pullLatestData();
-  }, [selectedReviews, setSelectedReviews, pullLatestData]);
+  const onDelete = useCallback(() => {
+    axios
+      .post(`reviews/delete`, { ids: selectedReviews })
+      .then((resp) => {
+        if (resp.status === 200) {
+          toast.success(t("recording.confirmDelete.toast.success"), {
+            position: "top-center",
+          });
+          setSelectedReviews([]);
+          pullLatestData();
+        }
+      })
+      .catch((error) => {
+        const errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.detail ||
+          "Unknown error";
+        toast.error(
+          t("recording.confirmDelete.toast.error", {
+            error: errorMessage,
+          }),
+          {
+            position: "top-center",
+          },
+        );
+      });
+  }, [selectedReviews, setSelectedReviews, pullLatestData, t]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bypassDialog, setBypassDialog] = useState(false);
@@ -95,7 +118,12 @@ export default function ReviewActionGroup({
 
       <div className="absolute inset-x-2 inset-y-0 flex items-center justify-between gap-2 bg-background py-2 md:left-auto">
         <div className="mx-1 flex items-center justify-center text-sm text-muted-foreground">
-          <div className="p-1">{`${selectedReviews.length} selected`}</div>
+          <div className="p-1">
+            {t("selected", {
+              ns: "views/events",
+              count: selectedReviews.length,
+            })}
+          </div>
           <div className="p-1">{"|"}</div>
           <div
             className="cursor-pointer p-2 text-primary hover:rounded-lg hover:bg-secondary"

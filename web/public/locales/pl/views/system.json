@@ -40,14 +40,17 @@
       "gpuEncoder": "Enkoder GPU",
       "gpuDecoder": "Dekoder GPU",
       "gpuMemory": "Pamięć GPU",
-      "gpuUsage": "Użycie GPU"
+      "gpuUsage": "Użycie GPU",
+      "npuUsage": "Użycie NPU",
+      "npuMemory": "Pamięć NPU"
     },
     "title": "Ogólne",
     "detector": {
       "title": "Detektory",
       "inferenceSpeed": "Szybkość wnioskowania detektora",
       "cpuUsage": "Użycie CPU przez detektor",
-      "memoryUsage": "Użycie pamięci przez detektor"
+      "memoryUsage": "Użycie pamięci przez detektor",
+      "temperature": "Temperatura detektora"
     },
     "otherProcesses": {
       "title": "Inne procesy",
@@ -87,8 +90,17 @@
       "camera": "kamera",
       "detect": "wykryj",
       "skipped": "pominięte",
-      "ffmpeg": "ffmpeg",
-      "capture": "przechwytywanie"
+      "ffmpeg": "FFmpeg",
+      "capture": "przechwytywanie",
+      "overallSkippedDetectionsPerSecond": "łączna liczba pominiętych detekcji na sekundę",
+      "cameraSkippedDetectionsPerSecond": "{{camName}} liczba pominiętych detekcji na sekundę",
+      "overallFramesPerSecond": "łączna liczba klatek na sekundę",
+      "overallDetectionsPerSecond": "łączna liczba detekcji na sekundę",
+      "cameraCapture": "{{camName}} przechwytywanie",
+      "cameraDetect": "{{camName}} detekcja",
+      "cameraFramesPerSecond": "{{camName}} liczba klatek na sekundę",
+      "cameraDetectionsPerSecond": "{{camName}} liczba detekcji na sekundę",
+      "cameraFfmpeg": "{{camName}} FFmpeg"
     }
   },
   "storage": {
@@ -139,10 +151,13 @@
   "metrics": "Metryki systemowe",
   "lastRefreshed": "Ostatnie odświeżenie: ",
   "stats": {
-    "ffmpegHighCpuUsage": "{{camera}} ma wysokie użycie CPU przez FFMPEG ({{ffmpegAvg}}%)",
+    "ffmpegHighCpuUsage": "{{camera}} ma wysokie użycie CPU przez FFmpeg ({{ffmpegAvg}}%)",
     "detectHighCpuUsage": "{{camera}} ma wysokie użycie CPU przez detekcję ({{detectAvg}}%)",
     "healthy": "System jest sprawny",
-    "reindexingEmbeddings": "Ponowne indeksowanie osadzeń ({{processed}}% ukończone)"
+    "reindexingEmbeddings": "Ponowne indeksowanie osadzeń ({{processed}}% ukończone)",
+    "detectIsSlow": "{{detect}} jest wolne ({{speed}} ms)",
+    "detectIsVerySlow": "{{detect}} jest bardzo wolne ({{speed}} ms)",
+    "cameraIsOffline": "{{camera}} jest niedostępna"
   },
   "enrichments": {
     "title": "Wzbogacenia",
@@ -151,7 +166,14 @@
       "image_embedding_speed": "Szybkość osadzania obrazów",
       "face_embedding_speed": "Szybkość osadzania twarzy",
       "plate_recognition_speed": "Szybkość rozpoznawania tablic rejestracyjnych",
-      "text_embedding_speed": "Szybkość osadzania tekstu"
+      "text_embedding_speed": "Szybkość osadzania tekstu",
+      "face_recognition_speed": "Szybkość rozpoznawania twarzy",
+      "image_embedding": "Osadzenie obrazu",
+      "plate_recognition": "Rozpoznawanie rejestracji samochodowych",
+      "yolov9_plate_detection_speed": "Prędkość detekcji rejestracji samochodowych YOLOv9",
+      "yolov9_plate_detection": "Detekcja rejestracji samochodowych YOLOv9",
+      "text_embedding": "Osadzenie tekstu",
+      "face_recognition": "Rozpoznawanie twarzy"
     }
   }
 }

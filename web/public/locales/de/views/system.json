@@ -29,14 +29,17 @@
       "gpuUsage": "GPU Auslastung",
       "gpuMemory": "Grafikspeicher",
       "gpuDecoder": "GPU Decoder",
-      "gpuEncoder": "GPU Encoder"
+      "gpuEncoder": "GPU Encoder",
+      "npuUsage": "NPU Verwendung",
+      "npuMemory": "NPU Speicher"
     },
     "title": "Allgemein",
     "detector": {
       "title": "Detektoren",
       "cpuUsage": "CPU-Auslastung des Detektors",
       "memoryUsage": "Arbeitsspeichernutzung des Detektors",
-      "inferenceSpeed": "Detektoren Inferenzgeschwindigkeit"
+      "inferenceSpeed": "Detektoren Inferenzgeschwindigkeit",
+      "temperature": "Temperatur des Detektors"
     },
     "otherProcesses": {
       "title": "Andere Prozesse",
@@ -88,14 +91,89 @@
     },
     "cameraStorage": {
       "camera": "Kamera",
-      "title": "Kamera Speicher"
+      "title": "Kamera Speicher",
+      "unused": {
+        "title": "Ungenutzt",
+        "tips": "Dieser Wert gibt möglicherweise nicht genau den freien Speicherplatz an, der Frigate zur Verfügung steht, wenn neben den Aufzeichnungen von Frigate noch andere Dateien auf der Festplatte gespeichert sind. Frigate verfolgt die Speichernutzung außerhalb der Aufzeichnungen nicht."
+      },
+      "unusedStorageInformation": "Info zum ungenutzten Speicher",
+      "storageUsed": "Speicher",
+      "percentageOfTotalUsed": "Prozentualer Anteil am Gesamtanteil",
+      "bandwidth": "Bandbreite"
     },
     "title": "Speicher",
     "overview": "Übersicht"
   },
   "cameras": {
     "info": {
-      "stream": "Stream {{idx}}"
+      "stream": "Stream {{idx}}",
+      "video": "Video:",
+      "codec": "Codec:",
+      "fetching": "Lade Kamera Daten",
+      "resolution": "Auflösung:",
+      "fps": "FPS:",
+      "unknown": "Unbekannt",
+      "audio": "Audio:",
+      "error": "Fehler: {{error}}",
+      "cameraProbeInfo": "{{camera}} Kamera-Untersuchsungsinfo",
+      "streamDataFromFFPROBE": "Stream-Daten werden mit <code>ffprobe</code> erhalten.",
+      "tips": {
+        "title": "Kamera-Untersuchsungsinfo"
+      }
+    },
+    "overview": "Übersicht",
+    "label": {
+      "detect": "erkennen",
+      "camera": "Kamera",
+      "skipped": "übersprungene",
+      "ffmpeg": "FFmpeg",
+      "capture": "aufnehmen",
+      "overallFramesPerSecond": "Bilder pro Sekunde",
+      "overallDetectionsPerSecond": "Erkennungen pro Sekunde",
+      "overallSkippedDetectionsPerSecond": "übersprungene Erkennungen pro Sekunde",
+      "cameraFfmpeg": "{{camName}} FFmpeg",
+      "cameraCapture": "{{camName}} Aufnahme",
+      "cameraDetect": "{{camName}} Erkennung",
+      "cameraFramesPerSecond": "{{camName}} Bilder pro Sekunde",
+      "cameraDetectionsPerSecond": "{{camName}} Erkennungen pro Sekunde",
+      "cameraSkippedDetectionsPerSecond": "{{camName}} übersprungene Erkennungen pro Sekunde"
+    },
+    "title": "Kameras",
+    "framesAndDetections": "Bilder / Erkennungen",
+    "toast": {
+      "success": {
+        "copyToClipboard": "Kopiert Untersuchungsdaten in die Zwischenablage."
+      },
+      "error": {
+        "unableToProbeCamera": "Die Kamera kann nicht getestet werden: {{errorMessage}}"
+      }
     }
-  }
+  },
+  "enrichments": {
+    "embeddings": {
+      "image_embedding_speed": "Geschwindigkeit der Bildeinbettung",
+      "face_embedding_speed": "Geschwindigkeit der Gesichtseinbettung",
+      "plate_recognition_speed": "Geschwindigkeit der Kennzeichenerkennung",
+      "text_embedding_speed": "Geschwindigkeit der Texteinbettung",
+      "plate_recognition": "Kennzeichen Erkennung",
+      "face_recognition_speed": "Gesichts Erkennungs Geschwindigkeit",
+      "text_embedding": "Einbettung von Bildern",
+      "face_recognition": "Gesichts Erkennung",
+      "image_embedding": "Bild Embedding",
+      "yolov9_plate_detection_speed": "YOLOv9 Kennzeichenerkennungsgeschwindigkeit",
+      "yolov9_plate_detection": "YOLOv9 Kennzeichenerkennung"
+    },
+    "title": "Optimierungen",
+    "infPerSecond": "Rückschlüsse pro Sekunde"
+  },
+  "stats": {
+    "healthy": "Das System läuft problemlos",
+    "ffmpegHighCpuUsage": "{{camera}} hat eine hohe FFmpeg CPU Auslastung ({{ffmpegAvg}}%)",
+    "detectHighCpuUsage": "{{camera}} hat eine hohe CPU Auslastung bei der Erkennung ({{detectAvg}}%)",
+    "reindexingEmbeddings": "Neuindizierung von Einbettungen ({{processed}}% erledigt)",
+    "detectIsSlow": "{{detect}} ist langsam ({{speed}} ms)",
+    "detectIsVerySlow": "{{detect}} ist sehr langsam ({{speed}} ms)",
+    "cameraIsOffline": "{{camera}} ist offline"
+  },
+  "lastRefreshed": "Zuletzt aktualisiert: "
 }

@@ -1,0 +1,17 @@
+export const supportedLanguageKeys = [
+  "en",
+  "es",
+  "fr",
+  "de",
+  "it",
+  "nl",
+  "nb-NO",
+  "zh-CN",
+  "yue-Hant",
+  "th",
+  "ru",
+  "tr",
+  "pl",
+  "uk",
+  "cs",
+];

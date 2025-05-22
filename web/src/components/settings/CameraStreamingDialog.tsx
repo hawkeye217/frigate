@@ -185,7 +185,7 @@ export function CameraStreamingDialog({
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader className="mb-4">
-        <DialogTitle className="capitalize">
+        <DialogTitle className="smart-capitalize">
           {t("group.camera.setting.title", {
             cameraName: camera.replaceAll("_", " "),
           })}
@@ -240,11 +240,13 @@ export function CameraStreamingDialog({
           Object.entries(config?.cameras[camera].live.streams).length > 0 && (
             <div className="flex flex-col items-start gap-2">
               <Label htmlFor="stream" className="text-right">
-                Stream
+                {t("group.camera.setting.stream")}
               </Label>
               <Select value={streamName} onValueChange={setStreamName}>
                 <SelectTrigger className="">
-                  <SelectValue placeholder="Choose a stream" />
+                  <SelectValue
+                    placeholder={t("group.camera.setting.placeholder")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {camera !== "birdseye" &&
@@ -305,7 +307,9 @@ export function CameraStreamingDialog({
             onValueChange={(value) => setStreamType(value as StreamType)}
           >
             <SelectTrigger className="">
-              <SelectValue placeholder="Choose a streaming option" />
+              <SelectValue
+                placeholder={t("group.camera.setting.streamMethod.placeholder")}
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="no-streaming">

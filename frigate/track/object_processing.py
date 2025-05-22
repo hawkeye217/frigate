@@ -7,6 +7,7 @@ import threading
 from collections import defaultdict
 from enum import Enum
 from multiprocessing.synchronize import Event as MpEvent
+from typing import Any
 
 import cv2
 import numpy as np
@@ -28,7 +29,7 @@ from frigate.config import (
     RecordConfig,
     SnapshotsConfig,
 )
-from frigate.const import UPDATE_CAMERA_ACTIVITY
+from frigate.const import FAST_QUEUE_TIMEOUT, UPDATE_CAMERA_ACTIVITY
 from frigate.events.types import EventStateEnum, EventTypeEnum
 from frigate.models import Event, Timeline
 from frigate.track.tracked_object import TrackedObject
@@ -70,7 +71,7 @@ class TrackedObjectProcessor(threading.Thread):
         self.event_end_subscriber = EventEndSubscriber()
         self.sub_label_subscriber = EventMetadataSubscriber(EventMetadataTypeEnum.all)
 
-        self.camera_activity: dict[str, dict[str, any]] = {}
+        self.camera_activity: dict[str, dict[str, Any]] = {}
         self.ongoing_manual_events: dict[str, str] = {}
 
         # {
@@ -248,7 +249,7 @@ class TrackedObjectProcessor(threading.Thread):
 
     def should_mqtt_snapshot(self, camera, obj: TrackedObject):
         # object never changed position
-        if obj.obj_data["position_changes"] == 0:
+        if obj.is_stationary():
             return False
 
         # if there are required zones and there is no overlap
@@ -301,7 +302,7 @@ class TrackedObjectProcessor(threading.Thread):
             return {}
 
     def get_current_frame(
-        self, camera: str, draw_options: dict[str, any] = {}
+        self, camera: str, draw_options: dict[str, Any] = {}
     ) -> np.ndarray | None:
         if camera == "birdseye":
             return self.frame_manager.get(
@@ -682,7 +683,9 @@ class TrackedObjectProcessor(threading.Thread):
 
             # cleanup event finished queue
             while not self.stop_event.is_set():
-                update = self.event_end_subscriber.check_for_update(timeout=0.01)
+                update = self.event_end_subscriber.check_for_update(
+                    timeout=FAST_QUEUE_TIMEOUT
+                )
 
                 if not update:
                     break

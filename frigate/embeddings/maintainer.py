@@ -7,7 +7,7 @@ import os
 import threading
 from multiprocessing.synchronize import Event as MpEvent
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import cv2
 import numpy as np
@@ -104,12 +104,14 @@ class EmbeddingMaintainer(threading.Thread):
         self.embeddings_responder = EmbeddingsResponder()
         self.frame_manager = SharedMemoryFrameManager()
 
-        self.detected_license_plates: dict[str, dict[str, any]] = {}
+        self.detected_license_plates: dict[str, dict[str, Any]] = {}
 
         # model runners to share between realtime and post processors
         if self.config.lpr.enabled:
             lpr_model_runner = LicensePlateModelRunner(
-                self.requestor, device=self.config.lpr.device
+                self.requestor,
+                device=self.config.lpr.device,
+                model_size=self.config.lpr.model_size,
             )
 
         # realtime processors
@@ -118,7 +120,7 @@ class EmbeddingMaintainer(threading.Thread):
         if self.config.face_recognition.enabled:
             self.realtime_processors.append(
                 FaceRealTimeProcessor(
-                    self.config, self.event_metadata_publisher, metrics
+                    self.config, self.requestor, self.event_metadata_publisher, metrics
                 )
             )
 
@@ -133,6 +135,7 @@ class EmbeddingMaintainer(threading.Thread):
             self.realtime_processors.append(
                 LicensePlateRealTimeProcessor(
                     self.config,
+                    self.requestor,
                     self.event_metadata_publisher,
                     metrics,
                     lpr_model_runner,
@@ -147,6 +150,7 @@ class EmbeddingMaintainer(threading.Thread):
             self.post_processors.append(
                 LicensePlatePostProcessor(
                     self.config,
+                    self.requestor,
                     self.event_metadata_publisher,
                     metrics,
                     lpr_model_runner,
@@ -155,7 +159,7 @@ class EmbeddingMaintainer(threading.Thread):
             )
 
         self.stop_event = stop_event
-        self.tracked_events: dict[str, list[any]] = {}
+        self.tracked_events: dict[str, list[Any]] = {}
         self.early_request_sent: dict[str, bool] = {}
         self.genai_client = get_genai_client(config)
 
@@ -186,7 +190,7 @@ class EmbeddingMaintainer(threading.Thread):
     def _process_requests(self) -> None:
         """Process embeddings requests"""
 
-        def _handle_request(topic: str, data: dict[str, any]) -> str:
+        def _handle_request(topic: str, data: dict[str, Any]) -> str:
             try:
                 # First handle the embedding-specific topics when semantic search is enabled
                 if self.config.semantic_search.enabled:
@@ -227,7 +231,7 @@ class EmbeddingMaintainer(threading.Thread):
 
     def _process_updates(self) -> None:
         """Process event updates"""
-        update = self.event_subscriber.check_for_update(timeout=0.01)
+        update = self.event_subscriber.check_for_update()
 
         if update is None:
             return
@@ -320,7 +324,7 @@ class EmbeddingMaintainer(threading.Thread):
     def _process_finalized(self) -> None:
         """Process the end of an event."""
         while True:
-            ended = self.event_end_subscriber.check_for_update(timeout=0.01)
+            ended = self.event_end_subscriber.check_for_update()
 
             if ended == None:
                 break
@@ -355,7 +359,7 @@ class EmbeddingMaintainer(threading.Thread):
 
             # expire in realtime processors
             for processor in self.realtime_processors:
-                processor.expire_object(event_id)
+                processor.expire_object(event_id, camera)
 
             if updated_db:
                 try:
@@ -416,7 +420,7 @@ class EmbeddingMaintainer(threading.Thread):
     def _process_recordings_updates(self) -> None:
         """Process recordings updates."""
         while True:
-            recordings_data = self.recordings_subscriber.check_for_update(timeout=0.01)
+            recordings_data = self.recordings_subscriber.check_for_update()
 
             if recordings_data == None:
                 break
@@ -433,7 +437,7 @@ class EmbeddingMaintainer(threading.Thread):
 
     def _process_event_metadata(self):
         # Check for regenerate description requests
-        (topic, payload) = self.event_metadata_subscriber.check_for_update(timeout=0.01)
+        (topic, payload) = self.event_metadata_subscriber.check_for_update()
 
         if topic is None:
             return
@@ -447,7 +451,7 @@ class EmbeddingMaintainer(threading.Thread):
 
     def _process_dedicated_lpr(self) -> None:
         """Process event updates"""
-        (topic, data) = self.detection_subscriber.check_for_update(timeout=0.01)
+        (topic, data) = self.detection_subscriber.check_for_update()
 
         if topic is None:
             return
@@ -581,6 +585,7 @@ class EmbeddingMaintainer(threading.Thread):
                 "type": TrackedObjectUpdateTypesEnum.description,
                 "id": event.id,
                 "description": description,
+                "camera": event.camera,
             },
         )
 

@@ -172,6 +172,7 @@ class CameraState:
                 # draw any attributes
                 for attribute in obj["current_attributes"]:
                     box = attribute["box"]
+                    box_area = int((box[2] - box[0]) * (box[3] - box[1]))
                     draw_box_with_label(
                         frame_copy,
                         box[0],
@@ -179,7 +180,7 @@ class CameraState:
                         box[2],
                         box[3],
                         attribute["label"],
-                        f"{attribute['score']:.0%}",
+                        f"{attribute['score']:.0%} {str(box_area)}",
                         thickness=thickness,
                         color=color,
                     )
@@ -239,7 +240,7 @@ class CameraState:
         self,
         frame_name: str,
         frame_time: float,
-        current_detections: dict[str, dict[str, any]],
+        current_detections: dict[str, dict[str, Any]],
         motion_boxes: list[tuple[int, int, int, int]],
         regions: list[tuple[int, int, int, int]],
     ):
@@ -282,9 +283,13 @@ class CameraState:
             }
             new_obj.thumbnail_data = thumbnail_data
             tracked_objects[id].thumbnail_data = thumbnail_data
-            self.best_objects[new_obj.obj_data["label"]] = new_obj
+            object_type = new_obj.obj_data["label"]
+            self.best_objects[object_type] = new_obj
 
             # call event handlers
+            for c in self.callbacks["snapshot"]:
+                c(self.name, self.best_objects[object_type], frame_name)
+
             for c in self.callbacks["start"]:
                 c(self.name, new_obj, frame_name)
 
@@ -337,7 +342,7 @@ class CameraState:
 
         # TODO: can i switch to looking this up and only changing when an event ends?
         # maintain best objects
-        camera_activity: dict[str, list[any]] = {
+        camera_activity: dict[str, list[Any]] = {
             "motion": len(motion_boxes) > 0,
             "objects": [],
         }

@@ -30,6 +30,8 @@ import { flattenPoints, interpolatePoints } from "@/utils/canvasUtil";
 import ActivityIndicator from "../indicators/activity-indicator";
 import { getAttributeLabels } from "@/utils/iconUtil";
 import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { LuExternalLink } from "react-icons/lu";
 
 type ZoneEditPaneProps = {
   polygons?: Polygon[];
@@ -198,7 +200,7 @@ export default function ZoneEditPane({
       speed_threshold: z.coerce
         .number()
         .min(0.1, {
-          message: "Speed threshold must be greater than or equal to 0.1",
+          message: t("masksAndZones.form.speed.error.mustBeGreaterOrEqualTo"),
         })
         .optional()
         .or(z.literal("")),
@@ -669,6 +671,17 @@ export default function ZoneEditPane({
                 </div>
                 <FormDescription>
                   {t("masksAndZones.zones.speedEstimation.desc")}
+                  <div className="mt-2 flex items-center text-primary">
+                    <Link
+                      to="https://docs.frigate.video/configuration/zones#speed-estimation"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline"
+                    >
+                      {t("masksAndZones.zones.speedEstimation.docs")}
+                      <LuExternalLink className="ml-2 inline-flex size-3" />
+                    </Link>
+                  </div>
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -686,11 +699,15 @@ export default function ZoneEditPane({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Line A distance (
-                        {config?.ui.unit_system == "imperial"
-                          ? "feet"
-                          : "meters"}
-                        )
+                        {t(
+                          "masksAndZones.zones.speedEstimation.lineADistance",
+                          {
+                            unit:
+                              config?.ui.unit_system == "imperial"
+                                ? t("feet", { ns: "common" })
+                                : t("meters", { ns: "common" }),
+                          },
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -709,11 +726,15 @@ export default function ZoneEditPane({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Line B distance (
-                        {config?.ui.unit_system == "imperial"
-                          ? "feet"
-                          : "meters"}
-                        )
+                        {t(
+                          "masksAndZones.zones.speedEstimation.lineBDistance",
+                          {
+                            unit:
+                              config?.ui.unit_system == "imperial"
+                                ? t("feet", { ns: "common" })
+                                : t("meters", { ns: "common" }),
+                          },
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -732,11 +753,15 @@ export default function ZoneEditPane({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Line C distance (
-                        {config?.ui.unit_system == "imperial"
-                          ? "feet"
-                          : "meters"}
-                        )
+                        {t(
+                          "masksAndZones.zones.speedEstimation.lineCDistance",
+                          {
+                            unit:
+                              config?.ui.unit_system == "imperial"
+                                ? t("feet", { ns: "common" })
+                                : t("meters", { ns: "common" }),
+                          },
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -755,11 +780,15 @@ export default function ZoneEditPane({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Line D distance (
-                        {config?.ui.unit_system == "imperial"
-                          ? "feet"
-                          : "meters"}
-                        )
+                        {t(
+                          "masksAndZones.zones.speedEstimation.lineDDistance",
+                          {
+                            unit:
+                              config?.ui.unit_system == "imperial"
+                                ? t("feet", { ns: "common" })
+                                : t("meters", { ns: "common" }),
+                          },
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -933,7 +962,7 @@ export function ZoneObjectSelector({
           {allLabels.map((item) => (
             <div key={item} className="flex items-center justify-between">
               <Label
-                className="w-full cursor-pointer capitalize text-primary"
+                className="w-full cursor-pointer text-primary smart-capitalize"
                 htmlFor={item}
               >
                 {t(item, { ns: "objects" })}

@@ -109,6 +109,7 @@ imdecode
 imencode
 imread
 imwrite
+inpoint
 interp
 iostat
 iotop
@@ -264,6 +265,7 @@ tensorrt
 tflite
 thresholded
 timelapse
+titlecase
 tmpfs
 tobytes
 toggleable

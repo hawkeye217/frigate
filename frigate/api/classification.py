@@ -1,10 +1,10 @@
 """Object classification APIs."""
 
+import datetime
 import logging
 import os
-import random
 import shutil
-import string
+from typing import Any
 
 import cv2
 from fastapi import APIRouter, Depends, Request, UploadFile
@@ -14,6 +14,7 @@ from peewee import DoesNotExist
 from playhouse.shortcuts import model_to_dict
 
 from frigate.api.auth import require_role
+from frigate.api.defs.request.classification_body import RenameFaceBody
 from frigate.api.defs.tags import Tags
 from frigate.config.camera import DetectConfig
 from frigate.const import FACE_DIR
@@ -58,7 +59,7 @@ def reclassify_face(request: Request, body: dict = None):
             content={"message": "Face recognition is not enabled.", "success": False},
         )
 
-    json: dict[str, any] = body or {}
+    json: dict[str, Any] = body or {}
     training_file = os.path.join(
         FACE_DIR, f"train/{sanitize_filename(json.get('training_file', ''))}"
     )
@@ -91,7 +92,7 @@ def train_face(request: Request, name: str, body: dict = None):
             content={"message": "Face recognition is not enabled.", "success": False},
         )
 
-    json: dict[str, any] = body or {}
+    json: dict[str, Any] = body or {}
     training_file_name = sanitize_filename(json.get("training_file", ""))
     training_file = os.path.join(FACE_DIR, f"train/{training_file_name}")
     event_id = json.get("event_id")
@@ -119,8 +120,7 @@ def train_face(request: Request, name: str, body: dict = None):
         )
 
     sanitized_name = sanitize_filename(name)
-    rand_id = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
-    new_name = f"{sanitized_name}-{rand_id}.webp"
+    new_name = f"{sanitized_name}-{datetime.datetime.now().timestamp()}.webp"
     new_file_folder = os.path.join(FACE_DIR, f"{sanitized_name}")
 
     if not os.path.exists(new_file_folder):
@@ -247,7 +247,7 @@ def deregister_faces(request: Request, name: str, body: dict = None):
             content={"message": "Face recognition is not enabled.", "success": False},
         )
 
-    json: dict[str, any] = body or {}
+    json: dict[str, Any] = body or {}
     list_of_ids = json.get("ids", "")
 
     context: EmbeddingsContext = request.app.embeddings
@@ -258,6 +258,35 @@ def deregister_faces(request: Request, name: str, body: dict = None):
         content=({"success": True, "message": "Successfully deleted faces."}),
         status_code=200,
     )
+
+
+@router.put("/faces/{old_name}/rename", dependencies=[Depends(require_role(["admin"]))])
+def rename_face(request: Request, old_name: str, body: RenameFaceBody):
+    if not request.app.frigate_config.face_recognition.enabled:
+        return JSONResponse(
+            status_code=400,
+            content={"message": "Face recognition is not enabled.", "success": False},
+        )
+
+    context: EmbeddingsContext = request.app.embeddings
+    try:
+        context.rename_face(old_name, body.new_name)
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": f"Successfully renamed face to {body.new_name}.",
+            },
+            status_code=200,
+        )
+    except ValueError as e:
+        logger.error(e)
+        return JSONResponse(
+            status_code=400,
+            content={
+                "message": "Error renaming face. Check Frigate logs.",
+                "success": False,
+            },
+        )
 
 
 @router.put("/lpr/reprocess")

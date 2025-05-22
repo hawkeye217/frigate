@@ -151,7 +151,7 @@ function ThumbnailRow({
 
   return (
     <div className="rounded-lg bg-background_alt p-2 md:px-4">
-      <div className="flex flex-row items-center text-lg capitalize">
+      <div className="flex flex-row items-center text-lg smart-capitalize">
         {t(objectType, { ns: "objects" })}
         {searchResults && (
           <span className="ml-3 text-sm text-secondary-foreground">
@@ -190,8 +190,8 @@ function ThumbnailRow({
               />
             </TooltipTrigger>
             <TooltipPortal>
-              <TooltipContent className="capitalize">
-                <ExploreMoreLink objectType={objectType} />
+              <TooltipContent>
+                {t("exploreMore", { label: objectType })}
               </TooltipContent>
             </TooltipPortal>
           </Tooltip>
@@ -282,13 +282,4 @@ function ExploreThumbnailImage({
       </div>
     </SearchResultActions>
   );
-}
-
-function ExploreMoreLink({ objectType }: { objectType: string }) {
-  const formattedType = objectType.replaceAll("_", " ");
-  const label = formattedType.endsWith("s")
-    ? `${formattedType}es`
-    : `${formattedType}s`;
-
-  return <div>Explore More {label}</div>;
 }

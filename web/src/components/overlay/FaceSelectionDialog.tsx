@@ -53,7 +53,13 @@ export default function FaceSelectionDialog({
   const Selector = isDesktop ? DropdownMenu : Drawer;
   const SelectorTrigger = isDesktop ? DropdownMenuTrigger : DrawerTrigger;
   const SelectorContent = isDesktop ? DropdownMenuContent : DrawerContent;
-  const SelectorItem = isDesktop ? DropdownMenuItem : DrawerClose;
+  const SelectorItem = isDesktop
+    ? DropdownMenuItem
+    : (props: React.HTMLAttributes<HTMLDivElement>) => (
+        <DrawerClose asChild>
+          <div {...props} className={cn(props.className, "my-2")} />
+        </DrawerClose>
+      );
 
   return (
     <div className={className ?? ""}>
@@ -72,35 +78,32 @@ export default function FaceSelectionDialog({
             <TooltipTrigger asChild={isChildButton}>{children}</TooltipTrigger>
           </SelectorTrigger>
           <SelectorContent
-            className={cn(
-              "max-h-[75dvh] overflow-hidden",
-              isMobile && "mx-1 gap-2 rounded-t-2xl px-4",
-            )}
+            className={cn("", isMobile && "mx-1 gap-2 rounded-t-2xl px-4")}
           >
             {isMobile && (
               <DrawerHeader className="sr-only">
-                <DrawerTitle>Log Details</DrawerTitle>
-                <DrawerDescription>Log details</DrawerDescription>
+                <DrawerTitle>Details</DrawerTitle>
+                <DrawerDescription>Details</DrawerDescription>
               </DrawerHeader>
             )}
             <DropdownMenuLabel>{t("trainFaceAs")}</DropdownMenuLabel>
             <div
               className={cn(
-                "flex flex-col",
-                isMobile && "gap-2 overflow-y-auto pb-4",
+                "flex max-h-[40dvh] flex-col overflow-y-auto",
+                isMobile && "gap-2 pb-4",
               )}
             >
               <SelectorItem
-                className="flex cursor-pointer gap-2 capitalize"
+                className="flex cursor-pointer gap-2 smart-capitalize"
                 onClick={() => setNewFace(true)}
               >
                 <LuPlus />
                 {t("createFaceLibrary.new")}
               </SelectorItem>
-              {faceNames.map((faceName) => (
+              {faceNames.sort().map((faceName) => (
                 <SelectorItem
                   key={faceName}
-                  className="flex cursor-pointer gap-2 capitalize"
+                  className="flex cursor-pointer gap-2 smart-capitalize"
                   onClick={() => onTrainAttempt(faceName)}
                 >
                   <LuScanFace />

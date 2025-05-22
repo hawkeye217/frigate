@@ -10,7 +10,7 @@
       },
       "context": "Verkennen kan worden gebruikt nadat de embeddings van gevolgde objecten opnieuw zijn geïndexeerd.",
       "estimatedTime": "Geschatte resterende tijd:",
-      "startingUp": "Opstarten..."
+      "startingUp": "Opstarten…"
     },
     "downloadingModels": {
       "setup": {
@@ -26,7 +26,7 @@
         "documentation": "Lees de documentatie"
       }
     },
-    "title": "Explore is niet beschikbaar"
+    "title": "Verkennen is niet beschikbaar"
   },
   "trackedObjectDetails": "Details getraceerd object",
   "type": {
@@ -39,16 +39,21 @@
     "createObjectMask": "Objectmasker maken",
     "lifecycleItemDesc": {
       "visible": "{{label}} Gedetecteerd",
-      "entered_zone": "{{label}} ingevoerd {{zones}}",
+      "entered_zone": "{{label}} in zone {{zones}}",
       "attribute": {
         "other": "{{label}} Herkend als {{attribute}}",
         "faceOrLicense_plate": "{{attribute}} Gedetecteerd voor {{label}}"
       },
       "heard": "{{label}} gehoord",
-      "gone": "{{label}} Links",
+      "gone": "{{label}} is vertrokken",
       "active": "{{label}} Werd actief",
       "stationary": "{{label}} werd stationair",
-      "external": "{{label}} gedetecteerd"
+      "external": "{{label}} gedetecteerd",
+      "header": {
+        "zones": "Zones",
+        "ratio": "Verhouding",
+        "area": "Gebied"
+      }
     },
     "annotationSettings": {
       "title": "Annotatie-instellingen",
@@ -140,7 +145,10 @@
       "desc": "Voer een nieuwe kentekenwaarde in voor deze {{label}}",
       "descNoLabel": "Voer een nieuwe kentekenwaarde in voor dit gevolgde object"
     },
-    "recognizedLicensePlate": "Erkende kentekenplaat"
+    "recognizedLicensePlate": "Erkende kentekenplaat",
+    "snapshotScore": {
+      "label": "Snapshot scoren"
+    }
   },
   "itemMenu": {
     "downloadVideo": {
@@ -180,7 +188,8 @@
         "success": "Het gevolgde object is succesvol verwijderd.",
         "error": "Verwijderen van gevolgd object mislukt: {{errorMessage}}"
       }
-    }
+    },
+    "tooltip": "{{type}} komt voor {{confidence}}% overeen met de zoekopdracht"
   },
   "dialog": {
     "confirmDelete": {
