@@ -778,9 +778,13 @@ class OnvifController:
 
             status_request = self.cams[camera_name]["status_request"]
             try:
+                logger.debug("Calling ONVIF GetStatus, waiting for camera response")
                 status = await self.cams[camera_name]["ptz"].GetStatus(status_request)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Exception in GetStatus: {e}")
                 pass  # We're unsupported, that'll be reported in the next check.
+
+            logger.debug(f"GetStatus has returned: {status}")
 
             try:
                 pan_tilt_status = getattr(status.MoveStatus, "PanTilt", None)
