@@ -849,14 +849,32 @@ class OnvifController:
                 f"{camera_name}: Camera zoom level: {self.ptz_metrics[camera_name].zoom_level.value}"
             )
 
+        metrics = self.ptz_metrics[camera_name]
+
+        motor_stopped = metrics.motor_stopped.is_set()
+        reset = metrics.reset.is_set()
+        start_time = metrics.start_time.value
+        frame_time = metrics.frame_time.value
+        stop_time = metrics.stop_time.value
+
+        logger.debug(
+            "PTZ check values for %s: motor_stopped=%s, reset=%s, start_time=%s, "
+            "frame_time=%s, stop_time=%s",
+            camera_name,
+            motor_stopped,
+            reset,
+            start_time,
+            frame_time,
+            stop_time,
+        )
+
         # some hikvision cams won't update MoveStatus, so warn if it hasn't changed
         if (
-            not self.ptz_metrics[camera_name].motor_stopped.is_set()
-            and not self.ptz_metrics[camera_name].reset.is_set()
-            and self.ptz_metrics[camera_name].start_time.value != 0
-            and self.ptz_metrics[camera_name].frame_time.value
-            > (self.ptz_metrics[camera_name].start_time.value + 10)
-            and self.ptz_metrics[camera_name].stop_time.value == 0
+            not motor_stopped
+            and not reset
+            and start_time != 0
+            and frame_time > (start_time + 10)
+            and stop_time == 0
         ):
             logger.debug(
                 f"Start time: {self.ptz_metrics[camera_name].start_time.value}, Stop time: {self.ptz_metrics[camera_name].stop_time.value}, Frame time: {self.ptz_metrics[camera_name].frame_time.value}"
