@@ -295,7 +295,7 @@ class PtzAutoTracker:
                 return
 
         if self.onvif.cams[camera]["init"]:
-            await self.onvif.get_camera_status(camera)
+            await self.onvif.get_camera_status(camera, "setup")
 
             # movement queue with asyncio on OnvifController loop
             asyncio.run_coroutine_threadsafe(
@@ -386,7 +386,7 @@ class PtzAutoTracker:
                 )
 
                 while not self.ptz_metrics[camera].motor_stopped.is_set():
-                    await self.onvif.get_camera_status(camera)
+                    await self.onvif.get_camera_status(camera, "calibrate 1")
 
                 zoom_out_values.append(self.ptz_metrics[camera].zoom_level.value)
 
@@ -397,7 +397,7 @@ class PtzAutoTracker:
                 )
 
                 while not self.ptz_metrics[camera].motor_stopped.is_set():
-                    await self.onvif.get_camera_status(camera)
+                    await self.onvif.get_camera_status(camera, "calibrate 2")
 
                 zoom_in_values.append(self.ptz_metrics[camera].zoom_level.value)
 
@@ -415,7 +415,7 @@ class PtzAutoTracker:
                     )
 
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera)
+                        await self.onvif.get_camera_status(camera, "calibrate 3")
 
                     zoom_out_values.append(self.ptz_metrics[camera].zoom_level.value)
 
@@ -430,7 +430,7 @@ class PtzAutoTracker:
                     )
 
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera)
+                        await self.onvif.get_camera_status(camera, "calibrate 4")
 
                     zoom_stop_time = time.time()
 
@@ -445,7 +445,7 @@ class PtzAutoTracker:
                     )
 
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera)
+                        await self.onvif.get_camera_status(camera, "calibrate 5")
 
                     full_relative_stop_time = time.time()
 
@@ -458,7 +458,7 @@ class PtzAutoTracker:
                     )
 
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera)
+                        await self.onvif.get_camera_status(camera, "calibrate 6")
 
                     self.zoom_time[camera] = (
                         full_relative_stop_time - full_relative_start_time
@@ -486,7 +486,7 @@ class PtzAutoTracker:
 
         # Wait until the camera finishes moving
         while not self.ptz_metrics[camera].motor_stopped.is_set():
-            await self.onvif.get_camera_status(camera)
+            await self.onvif.get_camera_status(camera, "calibrate 7")
 
         for step in range(num_steps):
             pan = step_sizes[step]
@@ -497,7 +497,7 @@ class PtzAutoTracker:
 
             # Wait until the camera finishes moving
             while not self.ptz_metrics[camera].motor_stopped.is_set():
-                await self.onvif.get_camera_status(camera)
+                await self.onvif.get_camera_status(camera, "calibrate 8")
             stop_time = time.time()
 
             self.move_metrics[camera].append(
@@ -518,7 +518,7 @@ class PtzAutoTracker:
 
             # Wait until the camera finishes moving
             while not self.ptz_metrics[camera].motor_stopped.is_set():
-                await self.onvif.get_camera_status(camera)
+                await self.onvif.get_camera_status(camera, "calibrate 9")
 
             logger.info(
                 f"Calibration for {camera} in progress: {round((step / num_steps) * 100)}% complete"
@@ -751,7 +751,7 @@ class PtzAutoTracker:
 
                             # Wait until the camera finishes moving
                             while not self.ptz_metrics[camera].motor_stopped.is_set():
-                                await self.onvif.get_camera_status(camera)
+                                await self.onvif.get_camera_status(camera, "movement 1")
 
                         if (
                             zoom > 0
@@ -761,7 +761,7 @@ class PtzAutoTracker:
 
                     # Wait until the camera finishes moving
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera, "movement")
+                        await self.onvif.get_camera_status(camera, "movement 2")
 
                     if self.config.cameras[camera].onvif.autotracking.movement_weights:
                         logger.debug(
@@ -1448,6 +1448,9 @@ class PtzAutoTracker:
 
     async def camera_maintenance(self, camera):
         # bail and don't check anything if we're calibrating or tracking an object
+        logger.debug(
+            f"init for {camera}? {self.autotracker_init[camera]}, calibrating? {self.calibrating[camera]}, tracking? {self.tracked_object[camera] is not None}"
+        )
         if (
             not self.autotracker_init[camera]
             or self.calibrating[camera]
