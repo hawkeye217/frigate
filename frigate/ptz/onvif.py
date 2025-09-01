@@ -50,6 +50,8 @@ class OnvifController:
 
         self.status_locks: dict[str, asyncio.Lock] = {}
 
+        self.status_locks: dict[str, asyncio.Lock] = {}
+
         # Create a dedicated event loop and run it in a separate thread
         self.loop = asyncio.new_event_loop()
         self.loop_thread = threading.Thread(target=self._run_event_loop, daemon=True)
@@ -766,7 +768,9 @@ class OnvifController:
             )
             return False
 
-    async def get_camera_status(self, camera_name: str) -> None:
+    async def get_camera_status(
+        self, camera_name: str, calling_func: str = "none"
+    ) -> None:
         async with self.status_locks[camera_name]:
             if camera_name not in self.cams.keys():
                 logger.error(f"ONVIF is not configured for {camera_name}")
@@ -778,8 +782,16 @@ class OnvifController:
 
             status_request = self.cams[camera_name]["status_request"]
             try:
-                logger.debug("Calling ONVIF GetStatus, waiting for camera response")
-                status = await self.cams[camera_name]["ptz"].GetStatus(status_request)
+                logger.debug(
+                    f"Calling ONVIF GetStatus ({calling_func}), waiting for camera response"
+                )
+                status = await asyncio.wait_for(
+                    self.cams[camera_name]["ptz"].GetStatus(status_request),
+                    timeout=5.0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"GetStatus timed out for {camera_name}")
+                return
             except Exception as e:
                 logger.debug(f"Exception in GetStatus: {e}")
                 pass  # We're unsupported, that'll be reported in the next check.
