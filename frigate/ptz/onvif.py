@@ -763,7 +763,9 @@ class OnvifController:
             )
             return False
 
-    async def get_camera_status(self, camera_name: str) -> None:
+    async def get_camera_status(
+        self, camera_name: str, calling_func: str = "none"
+    ) -> None:
         if camera_name not in self.cams.keys():
             logger.error(f"ONVIF is not configured for {camera_name}")
             return
@@ -774,8 +776,16 @@ class OnvifController:
 
         status_request = self.cams[camera_name]["status_request"]
         try:
-            logger.debug("Calling ONVIF GetStatus, waiting for camera response")
-            status = await self.cams[camera_name]["ptz"].GetStatus(status_request)
+            logger.debug(
+                f"Calling ONVIF GetStatus ({calling_func}), waiting for camera response"
+            )
+            status = await asyncio.wait_for(
+                self.cams[camera_name]["ptz"].GetStatus(status_request),
+                timeout=5.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"GetStatus timed out for {camera_name}")
+            return
         except Exception as e:
             logger.debug(f"Exception in GetStatus: {e}")
             pass  # We're unsupported, that'll be reported in the next check.

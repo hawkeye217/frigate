@@ -761,7 +761,7 @@ class PtzAutoTracker:
 
                     # Wait until the camera finishes moving
                     while not self.ptz_metrics[camera].motor_stopped.is_set():
-                        await self.onvif.get_camera_status(camera)
+                        await self.onvif.get_camera_status(camera, "movement")
 
                     if self.config.cameras[camera].onvif.autotracking.movement_weights:
                         logger.debug(
@@ -1462,8 +1462,11 @@ class PtzAutoTracker:
         if not self.autotracker_init[camera]:
             self._autotracker_setup(self.config.cameras[camera], camera)
         # regularly update camera status
-        if not self.ptz_metrics[camera].motor_stopped.is_set():
-            await self.onvif.get_camera_status(camera)
+        if (
+            not self.ptz_metrics[camera].motor_stopped.is_set()
+            and self.tracked_object[camera] is None
+        ):
+            await self.onvif.get_camera_status(camera, "maintenance")
 
         # return to preset if tracking is over
         if (
@@ -1492,7 +1495,7 @@ class PtzAutoTracker:
 
             # update stored zoom level from preset
             if not self.ptz_metrics[camera].motor_stopped.is_set():
-                await self.onvif.get_camera_status(camera)
+                await self.onvif.get_camera_status(camera, "maintenance - after")
 
             self.ptz_metrics[camera].tracking_active.clear()
             self.dispatcher.publish(
