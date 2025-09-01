@@ -1449,7 +1449,7 @@ class PtzAutoTracker:
     async def camera_maintenance(self, camera):
         # bail and don't check anything if we're calibrating or tracking an object
         logger.debug(
-            f"init for {camera}? {self.autotracker_init[camera]}, calibrating? {self.calibrating[camera]}, tracking? {self.tracked_object[camera] is not None}"
+            f"init for {camera}? {self.autotracker_init[camera]}, calibrating? {self.calibrating[camera]}, tracking? {self.tracked_object[camera] is not None}, has tracking history? {len(self.tracked_object_history[camera]) > 0}"
         )
         if (
             not self.autotracker_init[camera]
@@ -1467,7 +1467,7 @@ class PtzAutoTracker:
         # regularly update camera status
         if (
             not self.ptz_metrics[camera].motor_stopped.is_set()
-            and self.tracked_object[camera] is None
+            and len(self.tracked_object_history[camera]) == 0
         ):
             await self.onvif.get_camera_status(camera, "maintenance")
 
