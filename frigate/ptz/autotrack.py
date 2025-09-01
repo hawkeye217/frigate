@@ -1465,7 +1465,7 @@ class PtzAutoTracker:
         if not self.autotracker_init[camera]:
             self._autotracker_setup(self.config.cameras[camera], camera)
         # regularly update camera status
-        if (
+        while (
             not self.ptz_metrics[camera].motor_stopped.is_set()
             # and len(self.tracked_object_history[camera]) == 0
         ):
@@ -1487,7 +1487,9 @@ class PtzAutoTracker:
             self.tracked_object[camera] = None
             self.tracked_object_history[camera].clear()
 
+            logger.debug("In maintenance, waiting for motor stop")
             self.ptz_metrics[camera].motor_stopped.wait()
+            logger.debug("In maintenance, motor stopped")
             logger.debug(
                 f"{camera}: Time is {self.ptz_metrics[camera].frame_time.value}, returning to preset: {autotracker_config.return_preset}"
             )
@@ -1497,7 +1499,7 @@ class PtzAutoTracker:
             )
 
             # update stored zoom level from preset
-            if not self.ptz_metrics[camera].motor_stopped.is_set():
+            while not self.ptz_metrics[camera].motor_stopped.is_set():
                 await self.onvif.get_camera_status(camera, "maintenance - after")
 
             self.ptz_metrics[camera].tracking_active.clear()
