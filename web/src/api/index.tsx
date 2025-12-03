@@ -6,6 +6,11 @@ import { ReactNode } from "react";
 
 axios.defaults.baseURL = `${baseUrl}api/`;
 
+// Module-level flag to prevent multiple simultaneous redirects
+// (eg, when multiple SWR queries fail with 401 at once)
+// Fixes iOS PWA redirect loop issues
+let isRedirectingToLogin = false;
+
 type ApiProviderType = {
   children?: ReactNode;
   options?: Record<string, unknown>;
@@ -29,10 +34,13 @@ export function ApiProvider({ children, options }: ApiProviderType) {
             error.response &&
             [401, 302, 307].includes(error.response.status)
           ) {
-            // redirect to the login page if not already there
-            const loginPage = error.response.headers.get("location") ?? "login";
-            if (window.location.href !== loginPage) {
-              window.location.href = loginPage;
+            // Redirect to login if not already there and not already redirecting
+            if (
+              !window.location.pathname.endsWith("/login") &&
+              !isRedirectingToLogin
+            ) {
+              isRedirectingToLogin = true;
+              window.location.href = "/login";
             }
           }
         },
