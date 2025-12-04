@@ -3,13 +3,9 @@ import { SWRConfig } from "swr";
 import { WsProvider } from "./ws";
 import axios from "axios";
 import { ReactNode } from "react";
+import { isRedirectingToLogin, setRedirectingToLogin } from "./auth-redirect";
 
 axios.defaults.baseURL = `${baseUrl}api/`;
-
-// Module-level flag to prevent multiple simultaneous redirects
-// (eg, when multiple SWR queries fail with 401 at once)
-// Fixes iOS PWA redirect loop issues
-let isRedirectingToLogin = false;
 
 type ApiProviderType = {
   children?: ReactNode;
@@ -34,13 +30,11 @@ export function ApiProvider({ children, options }: ApiProviderType) {
             error.response &&
             [401, 302, 307].includes(error.response.status)
           ) {
-            // Redirect to login if not already there and not already redirecting
-            if (
-              !window.location.pathname.endsWith("/login") &&
-              !isRedirectingToLogin
-            ) {
-              isRedirectingToLogin = true;
-              window.location.href = "/login";
+            // redirect to the login page if not already there
+            const loginPage = error.response.headers.get("location") ?? "login";
+            if (window.location.href !== loginPage && !isRedirectingToLogin()) {
+              setRedirectingToLogin(true);
+              window.location.href = loginPage;
             }
           }
         },
@@ -64,3 +58,7 @@ function WsWithConfig({ children }: WsWithConfigType) {
 export function useApiHost() {
   return baseUrl;
 }
+
+// Re-export auth redirect utilities
+// eslint-disable-next-line react-refresh/only-export-components
+export { isRedirectingToLogin, setRedirectingToLogin } from "./auth-redirect";
