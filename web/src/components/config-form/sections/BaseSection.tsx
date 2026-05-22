@@ -608,6 +608,24 @@ export function ConfigSection({
   const currentFormData = pendingData || formData;
   const effectiveBaselineFormData = baselineSnapshot;
 
+  // ===== DEBUG INSTRUMENTATION (#23292 follow-up) =====
+  // Buffer-backed; captures the currentFormData reference (immutable per render)
+  // so there's no per-render JSON work and no devtools serialization cost.
+  useEffect(() => {
+    if (level !== "replay") return;
+    const _w = window as unknown as { __saveDebug?: unknown[] };
+    _w.__saveDebug = _w.__saveDebug ?? [];
+    _w.__saveDebug.push({
+      evt: "RENDER",
+      ts: performance.now(),
+      sectionPath,
+      cameraName,
+      pendingDataIsNull: pendingData === null,
+      currentFormData,
+    });
+  }, [currentFormData, pendingData, sectionPath, cameraName, level]);
+  // ===== END DEBUG =====
+
   // Build context for conditional messages
   const messageContext = useMemo<MessageConditionContext | undefined>(() => {
     if (!config || !currentFormData) return undefined;
@@ -761,7 +779,45 @@ export function ConfigSection({
         );
       }
 
-      await refreshConfig();
+      // ===== DEBUG INSTRUMENTATION (#23292 follow-up) =====
+      // Buffer-backed so devtools console serialization doesn't perturb timing.
+      // No inner try/catch: refreshConfig() errors propagate to the outer catch
+      // as in the original code. Captures references — SWR returns new objects
+      // on each fetch so refs are stable point-in-time snapshots.
+      const _w = window as unknown as { __saveDebug?: unknown[] };
+      _w.__saveDebug = _w.__saveDebug ?? [];
+      const _camNow = cameraName ? config?.cameras?.[cameraName] : undefined;
+      _w.__saveDebug.push({
+        evt: "BEFORE",
+        ts: performance.now(),
+        skipSave,
+        sectionPath,
+        cameraName,
+        pendingData,
+        currentConfigSection: _camNow
+          ? (_camNow as unknown as Record<string, unknown>)[sectionPath]
+          : undefined,
+        hidden: document.hidden,
+        vis: document.visibilityState,
+      });
+      const _beforeMs = performance.now();
+      const _refreshResult = await refreshConfig();
+      const _elapsedMs = performance.now() - _beforeMs;
+      const _resultCam = cameraName
+        ? (_refreshResult as { cameras?: Record<string, unknown> } | undefined)
+            ?.cameras?.[cameraName]
+        : undefined;
+      _w.__saveDebug.push({
+        evt: "AFTER",
+        ts: performance.now(),
+        elapsedMs: _elapsedMs,
+        sectionPath,
+        cameraName,
+        resultSection: _resultCam
+          ? (_resultCam as Record<string, unknown>)[sectionPath]
+          : undefined,
+      });
+      // ===== END DEBUG =====
       swrMutate("config/raw_paths");
       setPendingData(null);
       onSave?.();
@@ -823,6 +879,7 @@ export function ConfigSection({
     requiresRestartForOverrides,
     skipSave,
     onSavingChange,
+    config?.cameras,
   ]);
 
   // Handle reset to global/defaults - removes camera-level override or resets global to defaults
