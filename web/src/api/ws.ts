@@ -54,6 +54,17 @@ export function resetWsStore() {
   wsMessageIdCounter = 0;
 }
 
+// [stale-debug] single-line, timestamped, JSON-serialized console logger.
+// Emitting one plain string per line (instead of object args) means the output
+// can be filtered on "[stale-debug]" and copied via Select-All or right-click
+// "Save as…" as clean text — object args render collapsed and don't copy well.
+export function staleDebug(event: string, data: Record<string, unknown>): void {
+  // eslint-disable-next-line no-console
+  console.info(
+    `[stale-debug] ${new Date().toISOString()} ${event} ${JSON.stringify(data)}`,
+  );
+}
+
 // Parse and apply a raw WS message synchronously.
 // Called directly from WsProvider's onmessage handler.
 export function processWsMessage(raw: string) {
@@ -61,6 +72,29 @@ export function processWsMessage(raw: string) {
   if (!data) return;
 
   const { topic, payload } = data;
+
+  // [stale-debug] confirm the browser actually received the border-clearing
+  // events ("end" / stationary transition). If the backend "WS-OUT ... DELIVERED"
+  // line has no matching "RX events" line here, the message was lost in transit.
+  if (topic === "events" && typeof payload === "string") {
+    try {
+      const ev = JSON.parse(payload) as {
+        type?: string;
+        after?: { camera?: string; id?: string; stationary?: boolean };
+      };
+      const after = ev?.after ?? {};
+      if (ev?.type === "end" || (ev?.type === "update" && after.stationary)) {
+        staleDebug("RX-events", {
+          camera: after.camera,
+          id: after.id,
+          type: ev.type,
+          stationary: after.stationary,
+        });
+      }
+    } catch {
+      // ignore malformed events payloads
+    }
+  }
 
   if (topic === "camera_activity") {
     applyCameraActivity(payload as string);
@@ -87,7 +121,29 @@ function applyTopicUpdate(topic: string, newVal: unknown) {
   const unchanged =
     oldVal === newVal ||
     (typeof newVal === "object" && newVal !== null && isEqual(oldVal, newVal));
-  if (unchanged) return;
+  if (unchanged) {
+    // [stale-debug] a refreshed camera_activity snapshot (from onConnect) that
+    // is deep-equal to the cached one bails here WITHOUT notifying listeners —
+    // so the recovery path cannot correct a diverged objects list. Catch it.
+    if (topic.startsWith("camera_activity/")) {
+      staleDebug("SNAPSHOT-bail-unchanged", {
+        topic,
+        objects: (newVal as { objects?: { id: string }[] })?.objects?.map(
+          (o) => o.id,
+        ),
+      });
+    }
+    return;
+  }
+
+  if (topic.startsWith("camera_activity/")) {
+    staleDebug("SNAPSHOT-applied", {
+      topic,
+      objects: (newVal as { objects?: { id: string }[] })?.objects?.map(
+        (o) => o.id,
+      ),
+    });
+  }
 
   wsState[topic] = newVal;
   // Snapshot the Set — a listener may trigger unmount that modifies it.
@@ -517,6 +573,9 @@ export function useInitialCameraState(
 
     const listener = () => {
       if (document.visibilityState === "visible") {
+        // [stale-debug] in dev this is the ONLY snapshot-refresh trigger for a
+        // mounted card (master also re-requested on mount). Confirm it fires.
+        staleDebug("onConnect-sent-visibilitychange", { camera });
         sendCommand("onConnect");
       }
     };

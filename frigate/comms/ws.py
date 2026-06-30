@@ -569,6 +569,17 @@ class WebSocketClient(Communicator):
                 # malformed payload — fail closed
                 return
 
+        # [stale-debug] for the border-clearing events ("end" or a stationary
+        # transition), record the per-connection delivery decision made by the
+        # new outbound classifier. This is the dev-only code path that replaced
+        # the old broadcast-to-all.
+        debug_event: tuple[Any, Any, Any] | None = None
+        if topic == "events" and isinstance(parsed_payload, dict):
+            etype = parsed_payload.get("type")
+            after = parsed_payload.get("after") or {}
+            if etype == "end" or (etype == "update" and after.get("stationary")):
+                debug_event = (after.get("camera"), after.get("id"), etype)
+
         manager = self.websocket_server.manager
         with manager.lock:
             websockets = list(manager.websockets.values())
@@ -579,6 +590,18 @@ class WebSocketClient(Communicator):
             message = _materialize_for_ws(
                 ws, topic, ws_message, scope, parsed_payload, self.config
             )
+            if debug_event is not None:
+                environ = getattr(ws, "environ", None)
+                logger.info(
+                    "[stale-debug] WS-OUT events camera=%s id=%s type=%s conn=%s remote=%s role=%s -> %s",
+                    debug_event[0],
+                    debug_event[1],
+                    debug_event[2],
+                    id(ws),
+                    environ.get("REMOTE_ADDR") if environ else None,
+                    _ws_role_header(ws),
+                    "DELIVERED" if message is not None else "DROPPED",
+                )
             if message is None:
                 continue
             try:

@@ -1,4 +1,5 @@
 import {
+  staleDebug,
   useAudioDetections,
   useEnabledState,
   useFrigateEvents,
@@ -7,7 +8,7 @@ import {
 } from "@/api/ws";
 import { CameraConfig, FrigateConfig } from "@/types/frigateConfig";
 import { MotionData, ReviewSegment } from "@/types/review";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AudioDetection, ObjectType } from "@/types/ws";
 import { useTimelineUtils } from "./use-timeline-utils";
 import useDeepMemo from "./use-deep-memo";
@@ -57,6 +58,12 @@ export function useCameraActivity(
   );
   useEffect(() => {
     if (updatedCameraState) {
+      // [stale-debug] the snapshot is the only thing that can resync a diverged
+      // objects list. Log every time it reseeds, and with what.
+      staleDebug("SNAPSHOT-setObjects", {
+        camera: camera?.name,
+        objects: updatedCameraState.objects?.map((o) => o.id),
+      });
       setObjects(updatedCameraState.objects);
     }
   }, [updatedCameraState, camera]);
@@ -145,8 +152,48 @@ export function useCameraActivity(
       }
     }
 
+    // [stale-debug] confirm the effect actually ran for a border-clearing event
+    // and observe the result. If "RX events" logged an "end" but no matching
+    // PROCESS line appears, the event was coalesced/dropped at the React layer.
+    // If foundIndex is -1 on an "end", the object was not in the list.
+    if (
+      updatedEvent.type === "end" ||
+      (updatedEvent.type === "update" && updatedEvent.after.stationary)
+    ) {
+      staleDebug("PROCESS-event", {
+        camera: camera?.name,
+        type: updatedEvent.type,
+        id: updatedEvent.after.id,
+        foundIndex: updatedEventIndex,
+        activeAfter: newObjects.filter((o) => !o.stationary).map((o) => o.id),
+      });
+    }
+
     handleSetObjects(newObjects);
   }, [attributeLabels, camera, updatedEvent, objects, handleSetObjects]);
+
+  // [stale-debug] periodic persistence check. Every 10s, if this camera still
+  // shows active objects, log them. A stuck red border appears as the SAME ids
+  // repeating here long after the backend "BACKEND-TRUTH" line went empty —
+  // that gap (and its duration) is the smoking gun.
+  const objectsRef = useRef(objects);
+  objectsRef.current = objects;
+  useEffect(() => {
+    const cameraName = camera?.name;
+    if (!cameraName) {
+      return;
+    }
+    const interval = setInterval(() => {
+      const active = (objectsRef.current ?? []).filter((o) => !o?.stationary);
+      if (active.length > 0) {
+        staleDebug("FE-STATE-periodic", {
+          camera: cameraName,
+          activeObjects: active.map((o) => ({ id: o.id, label: o.label })),
+        });
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [camera]);
 
   // determine if camera is offline
 

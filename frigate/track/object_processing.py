@@ -136,6 +136,20 @@ class TrackedObjectProcessor(threading.Thread):
                 "after": after,
                 "type": "new" if obj.previous["false_positive"] else "update",
             }
+            # [stale-debug] trace the events that add/clear the live red border.
+            # Log "new" and any stationary transition (active<->stationary), since
+            # both can clear the border on the frontend.
+            if message["type"] == "new" or after.get("stationary") != obj.previous.get(
+                "stationary"
+            ):
+                logger.info(
+                    "[stale-debug] EMIT events camera=%s id=%s label=%s type=%s stationary=%s",
+                    camera,
+                    after.get("id"),
+                    after.get("label"),
+                    message["type"],
+                    after.get("stationary"),
+                )
             self.dispatcher.publish("events", json.dumps(message), retain=False)
             obj.previous = after
             self.event_sender.publish(
@@ -170,8 +184,25 @@ class TrackedObjectProcessor(threading.Thread):
                     "after": obj.to_dict(),
                     "type": "end",
                 }
+                # [stale-debug] the "end" event is the primary way the red border
+                # clears in real time. Confirm it is actually emitted.
+                logger.info(
+                    "[stale-debug] EMIT events camera=%s id=%s label=%s type=end",
+                    camera,
+                    obj.obj_data.get("id"),
+                    obj.obj_data.get("label"),
+                )
                 self.dispatcher.publish("events", json.dumps(message), retain=False)
                 self.ptz_autotracker_thread.ptz_autotracker.end_object(camera, obj)
+            else:
+                # [stale-debug] a false-positive object never emits an "end". If
+                # such an object was ever shown, the border can never clear.
+                logger.info(
+                    "[stale-debug] SKIP end (false_positive) camera=%s id=%s label=%s",
+                    camera,
+                    obj.obj_data.get("id"),
+                    obj.obj_data.get("label"),
+                )
 
             self.event_sender.publish(
                 (

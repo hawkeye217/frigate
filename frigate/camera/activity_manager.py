@@ -119,6 +119,15 @@ class CameraActivityManager:
     def compare_camera_activity(
         self, camera: str, new_activity: list[dict[str, Any]]
     ) -> None:
+        # [stale-debug] backend ground truth: the authoritative active-object set
+        # for this camera, logged whenever it changes. Compare these ids against
+        # the frontend's "[stale-debug] FE-STATE periodic" lines to see divergence.
+        logger.info(
+            "[stale-debug] BACKEND-TRUTH camera=%s active=%s all=%s",
+            camera,
+            [o.get("id") for o in new_activity if not o.get("stationary")],
+            [(o.get("id"), o.get("label"), o.get("stationary")) for o in new_activity],
+        )
         all_objects = Counter(
             obj["label"].replace("-verified", "") for obj in new_activity
         )
